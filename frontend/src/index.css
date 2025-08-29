@@ -11,19 +11,34 @@
   color: rgba(16, 17, 16, 0.87);
   /* background-color: #10110f; */
 
+nav {
+  background-color: #20903a;
+  padding: 12px;
+  color: white;
+  text-align: center;
+  position: fixed;
+  z-index: 50; /* biar selalu di depan */
+}
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
 }
+
+
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #fff;
   text-decoration: inherit;
+  padding-right: 50px;
 }
 a:hover {
-  color: #535bf2;
+  color: rgb(9, 124, 132);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 body {
@@ -48,9 +63,10 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #033e23;
+  background-color: #dc4d14;
   cursor: pointer;
   transition: border-color 0.25s;
+  margin-top: 20px;
 }
 button:hover {
   border-color: #f0f1f9;
@@ -59,6 +75,25 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+.complete-upload {
+  display: flex;
+  justify-content: center;   /* horizontal center */
+  align-items: flex-start;   /* biar nempel atas */
+  min-height: 0vh;         /* penuh 1 layar */
+  padding-top: 60px;
+  margin-top: -0%;         /* jarak dari atas */
+  width: 100vw;
+}
+.choose-file {
+  padding-top: 1000px
+}
+.btn-upload {
+  margin-top: 20px;
+}
+.complete-upload {
+  text-align: center;
+}
+
 
 @media (prefers-color-scheme: light) {
   :root {
