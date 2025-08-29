@@ -27,7 +27,7 @@ export default function Navbar() {
 
 
           {/* Menu links */}
-          <div className="flex space-x-10 ml-auto">
+          <div className="lg:flex space-x-10 ml-auto">
             <Link to="/" className="hover:text-gray-300 ">
               Home
             </Link>
@@ -43,7 +43,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Hamburger Button */}
-          <div className="hamburger-menu">
+          <div className="hamburger-menu lg:hidden">
             <button onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? (
                 <Bars3Icon className="h-5 w-5" />
@@ -52,6 +52,22 @@ export default function Navbar() {
               )}
             </button>
           </div>
+          {isOpen && (
+            <div className="mobile-menu">
+              <Link to="/" className="block px-4 py-2 text-sm">
+                Home
+              </Link>
+              <Link to="/dashboard" className="block px-4 py-2 text-sm">
+                Dashboard
+              </Link>
+              <Link to="/transactions" className="block px-4 py-2 text-sm">
+                Transaction
+              </Link>
+              <Link to="/upload" className="block px-4 py-2 text-sm">
+                Upload
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>

@@ -64,8 +64,8 @@ export default function FileUpload() {
             />
           </label>
         ) : (
-          
-          <div className="file-info relative mt-[-80px]">
+
+          <div className="file-info border relative mt-[-80px]">
             {/* Tombol X */}
             <div className="remove-file">
               <XCircleIcon onClick={handleRemoveFile} className="w-5 h-5" />

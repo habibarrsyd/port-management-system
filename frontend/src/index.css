@@ -122,14 +122,14 @@ button:focus-visible {
   background-color: red;
 }
 
-.hamburger-menu {
-
+.file-info {
+  border: 2px dashed #3f3d3d;
+  padding: 15px;
+  border-radius: 8px;
 }
 
-
 .remove-file{
-  position: absolute;
-  padding-left: 205px;
+  position: fixed;
   cursor: pointer;
 }
 
