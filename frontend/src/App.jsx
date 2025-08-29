@@ -7,6 +7,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./component/Frame/Navbar";
 import TransactionsTable from "./pages/transaction";
+// import Dashboard from "./pages/dashboard";
 // import { StickyNavbar } from "./component/Frame/Navbar";
 // import { ComplexNavbar } from "./component/Frame/Navbar";
 // import React from "react";
@@ -24,6 +25,7 @@ function App() {
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/upload" element={<FileUpload />} />
         <Route path="/transactions" element={<TransactionsTable />} />
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
 
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
