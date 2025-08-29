@@ -150,6 +150,125 @@ button:focus-visible {
     background-color: #f9f9f9;
   } */
 }
+/* Container */
+.transactions-container {
+  padding: 46px;
+}
+
+/* Header */
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0px;
+  margin-top: 20px;
+}
+
+.transactions-header h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.transactions-header span {
+  background: #f54040; /* sky-500 */
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0px 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Table wrapper */
+.transactions-table-wrapper {
+  overflow-x: auto;
+  max-height: calc(100vh - 150px); /* otomatis ikut tinggi layar */
+  overflow-y: auto;  /* biar bisa scroll vertical */
+  border-radius: 12px;
+  min-height: 200px; /* ⬅️ tambahan */
+}
+
+/* Table base */
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  /* overflow: hidden; */
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+  table-layout: fixed;  /* ⬅️ biar ukuran kolom fix */
+}
+
+/* Table header */
+.transactions-table thead {
+  background: linear-gradient(to right, #d13e3e, #4b0505); /* sky-500 → indigo-500 */
+  color: white;
+  font-size: 0.875rem;
+}
+
+.transactions-table th {
+  padding: 12px;
+  text-align: left;
+}
+
+/* Table body */
+.transactions-table td {
+  padding: 12px;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e5e7eb; /* gray-200 */
+}
+
+/* Zebra stripe */
+.transactions-table tbody tr:nth-child(even) {
+  background: #f9fafb; /* gray-50 */
+}
+
+/* Hover effect */
+.transactions-table tbody tr:hover {
+  background: #f0f9ff; /* sky-50 */
+  transition: background 0.2s;
+}
+
+/* Problem column */
+.transactions-table td.problem {
+  color: #dc2626; /* red-600 */
+  font-weight: 500;
+}
+
+/* Search box */
+.transactions-search {
+  margin-bottom: 12px;
+}
+
+.transactions-search input {
+  width: 250px;
+  padding: 6px 12px;
+  border: 1px solid #d1d5db; /* gray-300 */
+  border-radius: 6px;
+  outline: none;
+}
+
+.transactions-search input:focus {
+  border-color: #0ea5e9; /* sky-500 */
+  box-shadow: 0 0 0 2px rgba(14,165,233,0.3);
+}
+
+/* Sortable header (klik buat sort) */
+.transactions-table th {
+  cursor: pointer;
+  user-select: none;
+}
+
+.transactions-table th:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.transactions-table td.no-data {
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+  color: #6b7280; /* gray-500 */
+}
 
 @media (min-width: 768px) {
   .hamburger-menu {

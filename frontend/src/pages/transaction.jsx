@@ -4,6 +4,8 @@ import { supabase } from "../Supabaseclient";
 export default function TransactionsTable() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
   useEffect(() => {
     fetchTransactions();
@@ -22,52 +24,88 @@ export default function TransactionsTable() {
     setLoading(false);
   }
 
+  // Filtering (search)
+  const filteredData = transactions.filter((t) =>
+    Object.values(t).some((val) =>
+      String(val).toLowerCase().includes(search.toLowerCase())
+    )
+  );
+
+  // Sorting
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    const valA = a[sortConfig.key] ?? "";
+    const valB = b[sortConfig.key] ?? "";
+
+    if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+    if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const requestSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
   if (loading) return <p className="p-4">Loading...</p>;
 
-  return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Port Transactions</h2>
-        <span className="bg-sky-400 text-white px-3 py-1 rounded-md text-sm font-semibold">
-          {transactions.length} total records
-        </span>
+return (
+    <div className="transactions-container">
+      <div className="transactions-header">
+        <h2>Port Transactions</h2>
+        <span>{transactions.length} total records</span>
       </div>
 
-      {/* Container tanpa batasan tinggi, hanya skrol horizontal jika perlu */}
-      <div className="overflow-y-auto">
-        <table className="w-full border-collapse bg-white">
-          <thead className="bg-gray-800 text-white text-sm sticky top-0 z-10">
+      {/* 🔍 Search box */}
+      <div className="transactions-search">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      <div className="transactions-table-wrapper">
+        <table className="transactions-table">
+          <thead>
             <tr>
-              <th className="p-2">Ship</th>
-              <th className="p-2">Voyage</th>
-              <th className="p-2">Route</th>
-              <th className="p-2">Td_Ta</th>
-              <th className="p-2">Ta_Taob</th>
-              <th className="p-2">Port</th>
-              <th className="p-2">Problem</th>
-              <th className="p-2">Period</th>
-              <th className="p-2">Port Route</th>
+              <th onClick={() => requestSort("kapal")}>Ship</th>
+              <th onClick={() => requestSort("voy_arr")}>Voyage</th>
+              <th onClick={() => requestSort("asal")}>Route</th>
+              <th onClick={() => requestSort("td_ta")}>Td_Ta</th>
+              <th onClick={() => requestSort("ta_taob")}>Ta_Taob</th>
+              <th onClick={() => requestSort("port")}>Port</th>
+              <th onClick={() => requestSort("remark")}>Problem</th>
+              <th onClick={() => requestSort("period")}>Period</th>
+              <th onClick={() => requestSort("port_route")}>Port Route</th>
             </tr>
           </thead>
           <tbody>
-            {transactions.map((t, i) => (
-              <tr
-                key={t.id}
-                className={`text-sm border-b hover:bg-gray-50 ${
-                  i % 2 === 0 ? "bg-gray-100" : "bg-white"
-                }`}
-              >
-                <td className="p-2">{t.kapal}</td>
-                <td className="p-2">{t.voy_arr} → {t.voy_dep}</td>
-                <td className="p-2">{t.asal} → {t.tujuan}</td>
-                <td className="p-2">{t.td_ta}</td>
-                <td className="p-2">{t.ta_taob}</td>
-                <td className="p-2">{t.port}</td>
-                <td className="p-2">{t.remark}</td>
-                <td className="p-2">{t.period}</td>
-                <td className="p-2">{t.port_route}</td>
+            {sortedData.length > 0 ? (
+              sortedData.map((t) => (
+                <tr key={t.id}>
+                  <td>{t.kapal}</td>
+                  <td>{t.voy_arr} → {t.voy_dep}</td>
+                  <td>{t.asal} → {t.tujuan}</td>
+                  <td>{t.td_ta}</td>
+                  <td>{t.ta_taob}</td>
+                  <td>{t.port}</td>
+                  <td className="problem">{t.remark}</td>
+                  <td>{t.period}</td>
+                  <td>{t.port_route}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="9" className="text-center py-6 text-gray-500">
+                  No data found
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
