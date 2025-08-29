@@ -1,6 +1,9 @@
 /* PAGE NAVBAR MANUAL PERTAMA LANCAR AMAN TAPI HARUS MAKE <NAVBAR /> DI APP,JSX */
 import React from "react";
 import { Link } from "react-router-dom";
+import Icon from "@mdi/react";
+import { mdiServerNetwork } from "@mdi/js";
+
 
 export default function Navbar() {
   return (
@@ -14,6 +17,7 @@ export default function Navbar() {
               alt="logo"
               className="w-[50px] h-[30px] mt-[5px]"
             />
+            {/* <Icon path={mdiServerNetwork} size={1} className="text-blue-600" /> */}
             <span className=" font-bold ml-[15px]">
               Port Monitoring System
             </span>
@@ -25,13 +29,13 @@ export default function Navbar() {
             <Link to="/" className="hover:text-gray-300 ">
               Home
             </Link>
-            <Link to="/upload" className="text-white hover:text-gray-30 ">
+            <Link to="/dashboard" className="text-white hover:text-gray-30 ">
               Dashboard
             </Link>
             <Link to="/transactions" className="text-white hover:text-gray-300 ">
               Transaction
             </Link>
-            <Link to="/transactions" className="text-white hover:text-gray-300 ">
+            <Link to="/upload" className="text-white hover:text-gray-300 ">
               Upload
             </Link>
             {/* <Link to="/admin" className="hover:text-gray-300">

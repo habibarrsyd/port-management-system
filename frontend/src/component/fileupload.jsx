@@ -41,14 +41,22 @@ export default function FileUpload() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen h-screen w-screen">
-      <div className="flex flex-col items-center text-center">
-        <h2 className="text-xl font-semibold">Upload Excel File</h2>
-        <input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={handleFileChange}
-        />
+    <div className="complete-upload">
+    <div className="flex items-start justify-center min-h-screen h-screen w-screen">
+      <div className="flex flex-col items-center text-center mt-[10px] w-[700px] h-[200px] bg-gray-100 rounded-xl shadow-lg p-10">
+        <h2 className="text-[55px] font-semibold">Upload Excel File</h2>
+        <label
+  className="mt-6 bg-blue-400 hover:bg-blue-600 text-white rounded-lg px-6 py-3 cursor-pointer inline-block"
+>
+  Pilih File
+  <input
+    type="file"
+    accept=".xlsx,.xls"
+    onChange={handleFileChange}
+    className="hidden"
+  />
+</label>
+
         <button
           onClick={handleUpload}
           className="mt-11 bg-blue-400 hover:bg-blue-600 text-white rounded-lg "
@@ -60,6 +68,7 @@ export default function FileUpload() {
           <p className="mt-10 text-green-600 font-medium">{message}</p>
         )}
       </div>
+    </div>
     </div>
   );
 }

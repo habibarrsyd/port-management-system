@@ -17,6 +17,7 @@ nav {
   color: white;
   text-align: center;
   position: fixed;
+  z-index: 50; /* biar selalu di depan */
 }
 
   font-synthesis: none;
@@ -74,6 +75,25 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+.complete-upload {
+  display: flex;
+  justify-content: center;   /* horizontal center */
+  align-items: flex-start;   /* biar nempel atas */
+  min-height: 0vh;         /* penuh 1 layar */
+  padding-top: 60px;
+  margin-top: -0%;         /* jarak dari atas */
+  width: 100vw;
+}
+.choose-file {
+  padding-top: 1000px
+}
+.btn-upload {
+  margin-top: 20px;
+}
+.complete-upload {
+  text-align: center;
+}
+
 
 @media (prefers-color-scheme: light) {
   :root {
