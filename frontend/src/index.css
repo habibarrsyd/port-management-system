@@ -3,21 +3,22 @@
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Arial, system-ui, Avenir, Helvetica, sans-serif;
   line-height: 1.5;
-  font-weight: 400;
+  font-weight: 300;
 
   color-scheme: light ;
   color: rgba(16, 17, 16, 0.87);
   /* background-color: #10110f; */
 
 nav {
-  background-color: #20903a;
+  background-color: #ffffff;
   padding: 12px;
-  color: white;
+  color: rgb(53, 51, 51);
   text-align: center;
   position: fixed;
-  z-index: 50; /* biar selalu di depan */
+  z-index: 50; 
+  font-weight: 800;
 }
 
   font-synthesis: none;
@@ -27,17 +28,15 @@ nav {
 
 }
 
-
-
 a {
-  font-weight: 500;
-  color: #fff;
+  font-weight: 700;
+  color: #000000;
   text-decoration: inherit;
   padding-right: 50px;
 }
+
 a:hover {
-  color: rgb(9, 124, 132);
-  text-decoration: underline;
+  color: rgb(173, 9, 23);
   cursor: pointer;
 }
 
@@ -48,12 +47,27 @@ body {
   min-width: 100vw; 
   min-height: 100vh; 
   overflow: hidden;
-  background-color: #ffffff;
+  background-color: #f1ecec;
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+}
+
+label {
+  cursor: pointer;
+  background-color: #169434;
+  padding: 10px;
+  padding-left: 90px;
+  padding-right: 90px;
+  border-radius: 10px;
+  font-size: 40px;
+  color: white;
+}
+
+label:hover {
+  background-color: #0e6f27;
 }
 
 button {
@@ -63,35 +77,64 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #dc4d14;
+  /* background-color: #dc4d14; */
   cursor: pointer;
   transition: border-color 0.25s;
   margin-top: 20px;
 }
+
 button:hover {
   border-color: #f0f1f9;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+
 .complete-upload {
+  color: #1D4B21;
   display: flex;
   justify-content: center;   /* horizontal center */
   align-items: flex-start;   /* biar nempel atas */
   min-height: 0vh;         /* penuh 1 layar */
-  padding-top: 60px;
+  padding-top: 10px;
   margin-top: -0%;         /* jarak dari atas */
   width: 100vw;
 }
+
 .choose-file {
   padding-top: 1000px
 }
+
 .btn-upload {
   margin-top: 20px;
+  background-color: #169434;
+  padding: 10px;
+  padding-left: 30px;
+  padding-right: 30px;
+  border-radius: 10px;
+  font-size: 20px;
+  color: white;
 }
-.complete-upload {
-  text-align: center;
+
+.btn-upload:hover {
+  background-color: red;
+}
+
+.hamburger-menu {
+
+}
+
+
+.remove-file{
+  position: absolute;
+  padding-left: 205px;
+  cursor: pointer;
+}
+
+.remove-file:hover {
+  color: red;
 }
 
 
@@ -103,7 +146,13 @@ button:focus-visible {
   a:hover {
     color: #6e6e78;
   }
-  button {
+  /* button {
     background-color: #f9f9f9;
+  } */
+}
+
+@media (min-width: 768px) {
+  .hamburger-menu {
+    display: none;
   }
 }

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
+import { XCircleIcon } from "lucide-react";
 
 export default function FileUpload() {
   const [file, setFile] = useState(null);
@@ -8,12 +9,21 @@ export default function FileUpload() {
   const navigate = useNavigate();
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setMessage("");
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+    setMessage("");
   };
 
   const handleUpload = async () => {
     if (!file) {
-      alert("Pilih file dulu!");
+      toast.error("Pilih file dulu!");
       return;
     }
 
@@ -30,47 +40,67 @@ export default function FileUpload() {
 
       const text = await res.json();
       setMessage(text);
-      if (res.ok){
-        toast.success("File berhasil di-upload!");
-        navigate("/success");
-      }
+      toast.success("File berhasil di-upload!");
+      navigate("/success");
     } catch (err) {
-      // setMessage("Error: " + err.message);
-      toast.error("Upload gagal: " + err.message); 
+      toast.error("Upload gagal: " + err.message);
     }
   };
 
   return (
     <div className="complete-upload">
-    <div className="flex items-start justify-center min-h-screen h-screen w-screen">
-      <div className="flex flex-col items-center text-center mt-[10px] w-[700px] h-[200px] bg-gray-100 rounded-xl shadow-lg p-10">
-        <h2 className="text-[55px] font-semibold">Upload Excel File</h2>
-        <label
-  className="mt-6 bg-blue-400 hover:bg-blue-600 text-white rounded-lg px-6 py-3 cursor-pointer inline-block"
->
-  Pilih File
-  <input
-    type="file"
-    accept=".xlsx,.xls"
-    onChange={handleFileChange}
-    className="hidden"
-  />
-</label>
+      <div className="flex flex-col items-center text-center mt-[20px] w-[500px]">
+        <h5 className="text-[55px]">Upload Excel File</h5>
 
-        <button
-          onClick={handleUpload}
-          className="mt-11 bg-blue-400 hover:bg-blue-600 text-white rounded-lg "
-        >
-          Upload
-        </button>
+        {/* Pilih File */}
+        {!file ? (
+          <label className=" text-[30px] mt-[-80px]">
+            Select File
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+        ) : (
+          
+          <div className="file-info relative mt-[-80px]">
+            {/* Tombol X */}
+            <div className="remove-file">
+              <XCircleIcon onClick={handleRemoveFile} className="w-5 h-5" />
+            </div>
+
+            {/* Thumbnail */}
+            <div className="flex flex-col items-center">
+              <img
+                src="https://img.icons8.com/color/96/microsoft-excel-2019.png" 
+                alt="Excel"
+                className="w-16 h-16"
+              />
+              <span className="mt-2 text-sm font-small text-gray-500 truncate w-full">
+                {file.name}
+              </span>
+              <span className="text-xs text-gray-500">
+                {(file.size / 1024).toFixed(2)} KB
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Tombol Upload */}
+        {file && (
+          <button onClick={handleUpload} 
+            className="btn-upload">
+            Upload
+          </button>
+        )}
 
         {message && (
           <p className="mt-10 text-green-600 font-medium">{message}</p>
         )}
+        <ToastContainer />
       </div>
-    </div>
     </div>
   );
 }
-
-
