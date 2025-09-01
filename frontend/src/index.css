@@ -11,7 +11,7 @@
   color: rgba(16, 17, 16, 0.87);
   /* background-color: #10110f; */
 
-nav {
+/* nav {
   background-color: #ffffff;
   padding: 12px;
   color: rgb(53, 51, 51);
@@ -19,7 +19,7 @@ nav {
   position: fixed;
   z-index: 50; 
   font-weight: 800;
-}
+} */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -32,7 +32,7 @@ a {
   font-weight: 700;
   color: #000000;
   text-decoration: inherit;
-  padding-right: 50px;
+  padding-right: 30px;
 }
 
 a:hover {
@@ -46,7 +46,6 @@ body {
   place-items: center;
   min-width: 100vw; 
   min-height: 100vh; 
-  overflow: hidden;
   background-color: #f1ecec;
 }
 
@@ -146,10 +145,14 @@ button:focus-visible {
   a:hover {
     color: #6e6e78;
   }
-  /* button {
-    background-color: #f9f9f9;
-  } */
 }
+
+@media (max-width: 767px) {
+  .navbar-desktop a {
+    display: none;
+  }
+}
+
 /* Container */
 .transactions-container {
   padding: 46px;

@@ -1,75 +1,63 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Icon from "@mdi/react";
-import { mdiServerNetwork } from "@mdi/js";
-import { Bars3Icon } from "@heroicons/react/16/solid";
-
+import { mdiMenu, mdiClose } from "@mdi/js";
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+
+  const link = [
+    { name: "Home", path: "/" },
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "Transactions", path: "/transactions" },
+    { name: "Upload", path: "/upload" },
+  ];
 
   return (
-    <nav className="bg-red-300 text-white w-full sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center ml-[10px]">
-            <img 
-              src="./src/assets/images/logo-spil.png"
-              alt="logo"
-              className="w-[50px] h-[30px] mt-[5px]"
-            />
-            {/* <Icon path={mdiServerNetwork} size={1} className="text-blue-600" /> */}
-            <span className=" font-bold ml-[15px]">
-              Port Monitoring System
-            </span>
-          </div>
+    <div className="shadow-md w-full fixed bg-white top-0 left-0 z-50">
+      <div className="flex items-center justify-between bg-white py-5 md:px-10 px-6">
+        {/* Logo */}
+        <div className="font-bold text-xl cursor-pointer flex items-center gap-2">
+          <img
+            src="./src/assets/images/logo-spil.png"
+            className="w-[50px] h-[30px]"
+            alt="logo"
+          />
+          Port Monitoring System
+        </div>
 
+        {/* Desktop Menu */}
+        <ul className="navbar-desktop md:flex items-center gap-8 text-lg">
+          {link.map((item) => (
+            <li key={item.path} className="hover:text-blue-500">
+              <Link to={item.path}>{item.name}</Link>
+            </li>
+          ))}
+        </ul>
 
-          {/* Menu links */}
-          <div className="lg:flex space-x-10 ml-auto">
-            <Link to="/" className="hover:text-gray-300 ">
-              Home
-            </Link>
-            <Link to="/dashboard" className="text-white hover:text-gray-30 ">
-              Dashboard
-            </Link>
-            <Link to="/transactions" className="text-white hover:text-gray-300 ">
-              Transaction
-            </Link>
-            <Link to="/upload" className="text-white hover:text-gray-300 ">
-              Upload
-            </Link>
-          </div>
-
-          {/* Mobile Hamburger Button */}
-          <div className="hamburger-menu lg:hidden">
-            <button onClick={() => setIsOpen(!isOpen)}>
-              {isOpen ? (
-                <Bars3Icon className="h-5 w-5" />
-              ) : (
-                <Bars3Icon className="h-5 w-5" />
-              )}
-            </button>
-          </div>
-          {isOpen && (
-            <div className="mobile-menu">
-              <Link to="/" className="block px-4 py-2 text-sm">
-                Home
-              </Link>
-              <Link to="/dashboard" className="block px-4 py-2 text-sm">
-                Dashboard
-              </Link>
-              <Link to="/transactions" className="block px-4 py-2 text-sm">
-                Transaction
-              </Link>
-              <Link to="/upload" className="block px-4 py-2 text-sm">
-                Upload
-              </Link>
-            </div>
-          )}
+        {/* Mobile Icon */}
+        <div
+          onClick={() => setOpen(!open)}
+          className="text-3xl cursor-pointer md:hidden"
+        >
+          <Icon path={open ? mdiClose : mdiMenu} size={1.2} />
         </div>
       </div>
-    </nav>
+
+      {/* Mobile Menu */}
+      {open && (
+        <ul className="md:hidden absolute bg-white w-full left-0 top-16 flex flex-col items-start gap-6 py-6 px-8 text-lg shadow-md transition-all duration-500 ease-in-out">
+          {link.map((item) => (
+            <li
+              key={item.path}
+              className="w-full hover:text-blue-500"
+              onClick={() => setOpen(false)}
+            >
+              <Link to={item.path}>{item.name}</Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
