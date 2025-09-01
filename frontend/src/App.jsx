@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./component/Frame/Navbar";
 import TransactionsTable from "./pages/transaction";
 import Dashboard from "./pages/dashboard";
+import Card from "./component/cards";
 
 
 function App() {

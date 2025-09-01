@@ -53,62 +53,118 @@ export default function TransactionsTable() {
   if (loading) return <p className="p-4">Loading...</p>;
 
 return (
-    <div className="transactions-container">
-      <div className="transactions-header">
-        <h2>Port Transactions</h2>
-        <span>{transactions.length} total records</span>
+    <div className="p-[30px] mt-[80px]">
+      <div className="flex justify-between items-center mb-4 -mt-5">
+        <h2 className= "text-xl font-bold">Port Transactions</h2>
+        <span className="bg-[#f54040] text-white px-3 py-1 rounded-md text-sm font-semibold shadow-md">{transactions.length} total records</span>
       </div>
 
       {/* 🔍 Search box */}
-      <div className="transactions-search">
+      <div className="mb-5">
         <input
           type="text"
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          className="w-[250px] px-3 py-1.5 border border-gray-300 rounded-md outline-none 
+                    focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
         />
       </div>
 
-      <div className="transactions-table-wrapper">
-        <table className="transactions-table">
-          <thead>
-            <tr>
-              <th onClick={() => requestSort("kapal")}>Ship</th>
-              <th onClick={() => requestSort("voy_arr")}>Voyage</th>
-              <th onClick={() => requestSort("asal")}>Route</th>
-              <th onClick={() => requestSort("td_ta")}>Td_Ta</th>
-              <th onClick={() => requestSort("ta_taob")}>Ta_Taob</th>
-              <th onClick={() => requestSort("port")}>Port</th>
-              <th onClick={() => requestSort("remark")}>Problem</th>
-              <th onClick={() => requestSort("period")}>Period</th>
-              <th onClick={() => requestSort("port_route")}>Port Route</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedData.length > 0 ? (
-              sortedData.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.kapal}</td>
-                  <td>{t.voy_arr} → {t.voy_dep}</td>
-                  <td>{t.asal} → {t.tujuan}</td>
-                  <td>{t.td_ta}</td>
-                  <td>{t.ta_taob}</td>
-                  <td>{t.port}</td>
-                  <td className="problem">{t.remark}</td>
-                  <td>{t.period}</td>
-                  <td>{t.port_route}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="9" className="text-center py-6 text-gray-500">
-                  No data found
+
+      <div className="overflow-x-auto overflow-y-auto rounded-xl min-h-[200px] max-h-[calc(100vh-150px)] shadow">
+      <table className="w-full border-collapse bg-white rounded-xl table-fixed">
+        <thead className="bg-gradient-to-r from-red-600 to-red-950 text-white text-sm">
+          <tr>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("kapal")}
+            >
+              Ship
+            </th>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("voy_arr")}
+            >
+              Voyage
+            </th>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("asal")}
+            >
+              Route
+            </th>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("td_ta")}
+            >
+              Td_Ta
+            </th>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("ta_taob")}
+            >
+              Ta_Taob
+            </th>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("port")}
+            >
+              Port
+            </th>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("remark")}
+            >
+              Problem
+            </th>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("period")}
+            >
+              Period
+            </th>
+            <th
+              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+              onClick={() => requestSort("port_route")}
+            >
+              Port Route
+            </th>
+          </tr>
+        </thead>
+        <tbody className="text-sm">
+          {sortedData.length > 0 ? (
+            sortedData.map((t) => (
+              <tr
+                key={t.id}
+                className="even:bg-gray-50 hover:bg-sky-50 transition-colors"
+              >
+                <td className="px-3 py-3">{t.kapal}</td>
+                <td className="px-3 py-3">
+                  {t.voy_arr} → {t.voy_dep}
                 </td>
+                <td className="px-3 py-3">
+                  {t.asal} → {t.tujuan}
+                </td>
+                <td className="px-3 py-3">{t.td_ta}</td>
+                <td className="px-3 py-3">{t.ta_taob}</td>
+                <td className="px-3 py-3">{t.port}</td>
+                <td className="px-3 py-3 text-red-600 font-medium">{t.remark}</td>
+                <td className="px-3 py-3">{t.period}</td>
+                <td className="px-3 py-3">{t.port_route}</td>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="9" className="text-center py-6 italic text-gray-500">
+                No data found
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+
     </div>
   );
 }

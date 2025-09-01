@@ -12,11 +12,13 @@
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
+    "@iconify/react": "^6.0.0",
     "@material-tailwind/react": "^2.1.10",
     "@mdi/js": "^7.4.47",
     "@mdi/react": "^1.6.1",
     "@mui/icons-material": "^7.3.1",
     "@supabase/supabase-js": "^2.56.0",
+    "exceljs": "^4.4.0",
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.12.7",
     "lucide-react": "^0.542.0",
@@ -28,6 +30,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@iconify/json": "^2.2.380",
+    "@iconify/tailwind4": "^1.0.6",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",

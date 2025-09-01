@@ -49,12 +49,12 @@ export default function FileUpload() {
 
   return (
     <div className="complete-upload">
-      <div className="flex flex-col items-center text-center mt-[20px] w-[500px]">
-        <h5 className="text-[55px]">Upload Excel File</h5>
+      <div className="flex flex-col items-center text-center mt-[60px] w-[500px]">
+        <h5 className="font-bold text-[60px] mt-[40px]">Upload Excel File</h5>
 
         {/* Pilih File */}
         {!file ? (
-          <label className=" text-[30px] mt-[-80px]">
+          <label className="cursor-pointer bg-[#c51717] px-[70px] py-[10px] rounded-[15px] text-[40px] text-white hover:bg-[#d0d6d1] mt-[40px]">
             Select File
             <input
               type="file"
@@ -65,7 +65,7 @@ export default function FileUpload() {
           </label>
         ) : (
           
-          <div className="file-info relative mt-[-80px]">
+          <div className="file-info relative mt-[10px]">
             {/* Tombol X */}
             <div className="remove-file">
               <XCircleIcon onClick={handleRemoveFile} className="w-5 h-5" />

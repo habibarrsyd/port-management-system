@@ -1,34 +1,24 @@
-import React from "react";
+import React from 'react';
+import Card from '../component/cards';
 
-export default function Dashboard() {
+const Dashboard = () => {
   return (
-    <div className="dashboard-container">
-      {/* Header */}
-      <main className="main-content">
-        <h1 className="title">Dashboard</h1>
-        <p className="subtitle">
-          Welcome back, <span className="bold">admin!</span> You have access to all branches.
-        </p>
-
-        {/* Cards */}
-        <div className="cards">
-          <div className="card purple">126<br /><span>Total Transactions</span></div>
-          <div className="card red">1<br /><span>Active Branches</span></div>
-          <div className="card green">1<br /><span>Active Ports</span></div>
-          <div className="card gradient">1<br /><span>Days Active</span></div>
-        </div>
-
-        {/* Chart Area */}
-        <div className="charts">
-          <div className="chart-box">📊 Port Time Trends by Branch</div>
-          <div className="chart-box">📊 Port Time Components</div>
-        </div>
-
-        <div className="charts">
-          <div className="chart-box">📊 Branch Statistics</div>
-          <div className="chart-box">📊 Recent Transactions</div>
-        </div>
-      </main>
+    <div className="container mx-auto p-6 mt-40">
+      {/* Grid untuk 6 card (3 baris, masing-masing 2 card) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <Card title="Card 1" />
+        <Card title="Card 2" />
+        <Card title="Card 3" />
+        <Card title="Card 4" />
+        <Card title="Card 5" />
+        <Card title="Card 6" />
+      </div>
+      {/* Card terakhir memanjang penuh */}
+      <div className="grid grid-cols-1">
+        <Card title="Card 7" />
+      </div>
     </div>
   );
-}
+};
+
+export default Dashboard;
