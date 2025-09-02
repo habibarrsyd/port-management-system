@@ -77,17 +77,15 @@ export default function Navbar() {
               </li>
             ))}
           </ul>
-          <div className="ml-4 ">
+          <div className="ml-3">
             <Dropdown className = ""
               id="avatar-dropdown"
               buttonContent={
-                <div className="avatar">
-                  <div className="size-7 rounded-full overflow-hidden mt-2">
+                <div className="avatar size-7 rounded-full overflow-hidden mt-2">
                     <img
                       src="https://cdn.flyonui.com/fy-assets/avatar/avatar-1.png"
                       alt="avatar"
                     />
-                  </div>
                 </div>
               }
               menuContent={
@@ -139,7 +137,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {open && (
-        <ul className="md:hidden absolute bg-white w-full left-0 top-16 flex flex-col items-start gap-6 py-6 px-8 text-lg shadow-md transition-all duration-500 ease-in-out">
+        <ul className="md:hidden absolute bg-white w-full left-0 top-10 flex flex-col items-start gap-3 py-4 px-8 text-lg shadow-md transition-all duration-500 ease-in-out">
           {link.map((item) => (
             <li
               key={item.path}

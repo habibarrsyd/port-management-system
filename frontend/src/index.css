@@ -278,3 +278,12 @@ button:focus-visible {
     display: none;
   }
 }
+@media (max-width: 767px) {
+  .navbar-desktop a {
+    display: none;
+  }
+  /* Add this to hide avatar dropdown in mobile */
+  .navbar-desktop .ml-3 {
+    display: none;
+  }
+}
