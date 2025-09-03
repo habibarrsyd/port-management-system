@@ -88,18 +88,23 @@ export default function Dashboard() {
   const [vesselVoyageItems, setVesselVoyageItems] = useState([]);
   const [timePeriodItems, setTimePeriodItems] = useState([]);
   const [barData, setBarData] = useState([]);
+  const [productivityData, setProductivityData] = useState([]);
+  const [averageBerthingDuration, setAverageBerthingDuration] = useState(0);
+  const [averageTimeAfterCompletion, setAverageTimeAfterCompletion] = useState(0);
+  const [averageWaitingTime, setAverageWaitingTime] = useState(0);
+  const [occupancy, setOccupancy] = useState(0);
   const [error, setError] = useState(null);
 
-  const lineData = [
-    { name: 'Jan', value: 180 },
-    { name: 'Feb', value: 240 },
-    { name: 'Mar', value: 280 },
-    { name: 'Apr', value: 320 },
-    { name: 'May', value: 360 },
-    { name: 'Jun', value: 400 },
-    { name: 'Jul', value: 420 },
-    { name: 'Aug', value: 460 },
-  ];
+  // const lineData = [
+  //   { name: 'Jan', value: 180 },
+  //   { name: 'Feb', value: 240 },
+  //   { name: 'Mar', value: 280 },
+  //   { name: 'Apr', value: 320 },
+  //   { name: 'May', value: 360 },
+  //   { name: 'Jun', value: 400 },
+  //   { name: 'Jul', value: 420 },
+  //   { name: 'Aug', value: 460 },
+  // ];
 
   const pieData = [
     { name: '20ft', value: 200 },
@@ -128,56 +133,110 @@ export default function Dashboard() {
           .map(port => ({ label: port, href: '#', disabled: false }));
         setPortItems(uniquePorts);
 
-        // Fetch data for Vessel / Voyage and BarChart from 'another' table
+        // Fetch data for Vessel / Voyage, BarChart (td_ta averages), Productivity (prod_td_ta averages), Berthing Duration (tcl_tb averages), and Time After Completion (td_tcl averages) from 'another' table
         const { data: vesselData, error: vesselError } = await supabase
           .from('another') // Table name from your request
-          .select('kapal, td, tb') // Select kapal, td, tb
+          .select('kapal, td, tb, prod_td_ta, td_ta, tcl_tb, td_tcl, tb_ta') // Added tcl_tb and td_tcl
           .not('kapal', 'is', null)
           .not('td', 'is', null)
-          .not('tb', 'is', null);
+          .not('tb', 'is', null)
+          .not('prod_td_ta', 'is', null)
+          .not('td_ta', 'is', null)
+          .not('tcl_tb', 'is', null)
+          .not('td_tcl', 'is', null)
+          .not('tb_ta', 'is', null);
         if (vesselError) {
           console.error('Error fetching vessels:', vesselError);
           setError('Failed to fetch vessels. Please try again.');
           return;
         }
 
-        // Calculate durations for each entry, ignoring date and using time only
-        const durations = vesselData.map(item => {
-          const parseTimeToHours = (str) => {
-            if (!str) return 0;
-            const [, timePart] = str.split(' ');
-            const [hours = 0, minutes = 0, seconds = 0] = (timePart || '00:00:00').split(':').map(Number);
-            return hours + minutes / 60 + seconds / 3600;
-          };
+        // Parse function for hh:mm (or hh:mm:ss) to decimal hours
+        const parseDurationToHours = (str) => {
+          if (!str) return 0;
+          const parts = str.split(':').map(Number);
+          if (parts.length >= 2) {
+            const [hours, minutes, seconds = 0] = parts;
+            if (!isNaN(hours) && !isNaN(minutes) && !isNaN(seconds)) {
+              return hours + minutes / 60 + seconds / 3600;
+            }
+          }
+          return 0;
+        };
 
-          const tdHours = parseTimeToHours(item.td);
-          const tbHours = parseTimeToHours(item.tb);
-          let durasi = tbHours - tdHours;
-          if (durasi < 0) durasi += 24; // Handle overnight spans assuming <24h total
+        // Calculate average td_ta per kapal for barData
+        const tdTaData = vesselData.map(item => ({
+          kapal: item.kapal,
+          td_ta: parseDurationToHours(item.td_ta),
+        })).filter(item => !isNaN(item.td_ta));
 
-          return {
-            kapal: item.kapal,
-            durasi,
-          };
-        }).filter(item => !isNaN(item.durasi));
-
-        // Group by kapal and calculate average duration
-        const groupedData = durations.reduce((acc, curr) => {
-          const { kapal, durasi } = curr;
+        const groupedTdTaData = tdTaData.reduce((acc, curr) => {
+          const { kapal, td_ta } = curr;
           if (!acc[kapal]) {
             acc[kapal] = { sum: 0, count: 0 };
           }
-          acc[kapal].sum += durasi;
+          acc[kapal].sum += td_ta;
           acc[kapal].count += 1;
           return acc;
         }, {});
-        
-        const averageData = Object.keys(groupedData).map(kapal => ({
+
+        const averageTdTaData = Object.keys(groupedTdTaData).map(kapal => ({
           kapal: kapal,
-          value: groupedData[kapal].sum / groupedData[kapal].count // Rata-rata durasi
+          value: groupedTdTaData[kapal].sum / groupedTdTaData[kapal].count // Rata-rata td_ta in hours
         }));
 
-        setBarData(averageData);
+        setBarData(averageTdTaData);
+
+        // Calculate average prod_td_ta per kapal for productivityData
+        const prodData = vesselData.map(item => ({
+          kapal: item.kapal,
+          prod_td_ta: parseFloat(item.prod_td_ta), // Ensure it's a number
+        })).filter(item => !isNaN(item.prod_td_ta));
+
+        const groupedProdData = prodData.reduce((acc, curr) => {
+          const { kapal, prod_td_ta } = curr;
+          if (!acc[kapal]) {
+            acc[kapal] = { sum: 0, count: 0 };
+          }
+          acc[kapal].sum += prod_td_ta;
+          acc[kapal].count += 1;
+          return acc;
+        }, {});
+
+        const averageProdData = Object.keys(groupedProdData).map(kapal => ({
+          kapal: kapal,
+          value: groupedProdData[kapal].sum / groupedProdData[kapal].count // Rata-rata prod_td_ta
+        }));
+
+        setProductivityData(averageProdData);
+
+        const waitingTimes = vesselData
+          .map(item => parseDurationToHours(item.tb_ta))
+          .filter(n => !isNaN(n));
+        const sumWaiting = waitingTimes.reduce((a, b) => a + b, 0);
+        const avgWaiting = waitingTimes.length > 0 ? sumWaiting / waitingTimes.length : 0;
+        setAverageWaitingTime(avgWaiting);
+
+        // Calculate global average for berthing duration (tcl_tb)
+        const berthingTimes = vesselData
+          .map(item => parseDurationToHours(item.tcl_tb))
+          .filter(n => !isNaN(n));
+        const sumBerthing = berthingTimes.reduce((a, b) => a + b, 0);
+        const avgBerthing = berthingTimes.length > 0 ? sumBerthing / berthingTimes.length : 0;
+        setAverageBerthingDuration(avgBerthing);
+
+        // Calculate global average for time after completion (td_tcl)
+        const timeAfterTimes = vesselData
+          .map(item => parseDurationToHours(item.td_tcl))
+          .filter(n => !isNaN(n));
+        const sumTimeAfter = timeAfterTimes.reduce((a, b) => a + b, 0);
+        const avgTimeAfter = timeAfterTimes.length > 0 ? sumTimeAfter / timeAfterTimes.length : 0;
+        setAverageTimeAfterCompletion(avgTimeAfter);
+
+        // Calculate occupancy as (berthing / (berthing + time after)) * 100
+        const totalBerthedTime = avgBerthing + avgTimeAfter;
+        const calculatedOccupancy = totalBerthedTime > 0 ? (avgBerthing / totalBerthedTime) * 100 : 0;
+        setOccupancy(calculatedOccupancy);
 
         // For Vessel / Voyage dropdown, use unique kapal with example format
         const uniqueVessels = [...new Set(vesselData.map(item => item.kapal))]
@@ -232,9 +291,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-12 gap-6">
         {/* Bar Chart */}
         <div className="col-span-6 bg-white p-6 rounded-lg shadow">
-          <h2 className="font-bold mb-4">Port Stay & Berth Occupancy</h2>
+          <h2 className="font-bold mb-4">Port Stay</h2>
           <div style = {{marginLeft: -40}}>
-          <BarChart width={600} height={200} data={barData}>
+          <BarChart width={550} height={200} data={barData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="kapal" interval="preserveStartEnd" />
             <YAxis />
@@ -250,12 +309,12 @@ export default function Dashboard() {
           <div className="flex flex-col items-center justify-center">
             <div className="w-32 h-32 rounded-full border-[12px] border-gray-200 flex items-center justify-center relative">
               <div className="absolute w-32 h-32 rounded-full border-[11px] border-red-900 border-t-transparent border-l-transparent rotate-[45deg]" />
-              <span className="text-2xl font-bold">65%</span>
+              <span className="text-2xl font-bold">{Math.round(occupancy)}%</span>
             </div>
             <div className="mt-4 space-y-1 text-sm">
-              <p>Waiting Time: <span className="font-bold">40hrs</span></p>
-              <p>Berthing Duration: <span className="font-bold">34hrs</span></p>
-              <p>Time After Completion: <span className="font-bold">22hrs</span></p>
+              <p>Waiting Time: <span className="font-bold">{averageWaitingTime.toFixed(1)}hrs</span></p>
+              <p>Berthing Duration: <span className="font-bold">{averageBerthingDuration.toFixed(1)}hrs</span></p>
+              <p>Time After Completion: <span className="font-bold">{averageTimeAfterCompletion.toFixed(1)}hrs</span></p>
             </div>
           </div>
         </div>
@@ -264,7 +323,7 @@ export default function Dashboard() {
         <div className="col-span-6 bg-white p-6 rounded-lg shadow">
           <h2 className="font-bold mb-4">Productivity</h2>
           <div style={{marginLeft: -40}}>
-          <LineChart width={600} height={200} data={barData}>
+          <LineChart width={550} height={200} data={productivityData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="kapal" interval="preserveStartEnd" />
             <YAxis />
@@ -283,7 +342,7 @@ export default function Dashboard() {
               <XAxis dataKey="kapal" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="value" fill="#512a17ff" />
+              <Bar dataKey="" fill="#512a17ff" />
             </BarChart>
             <PieChart width={200} height={200}>
               <Pie
