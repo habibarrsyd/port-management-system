@@ -402,29 +402,32 @@ export default function Dashboard() {
       {/* 3 New Cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="font-bold mb-4">Total Transactions</h2>
-          <div className="flex items-center justify-center h-32">
-            <span className="text-8xl font-bold text-red-900">{transactionCount}</span>
+          <div className="flex h-25 items-center justify-between">
+            <span className="text-7xl font-bold text-red-900">{transactionCount}</span>
+            <HiChartBarSquare className="text-8xl text-red-900 ml-4" />
           </div>
+          <h2 className="font-bold">Total Transactions</h2>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="font-bold mb-4">Total Problems</h2>
-          <div className="flex items-center justify-center h-32">
-            <span className="text-8xl font-bold text-red-900">{remarksData.length}</span>
+          <div className="flex items-center justify-between h-25">
+            <span className="text-7xl font-bold text-red-900">{remarksData.length}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-red-900 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="#fee2e2" />
+              <path stroke="#4d0404ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01" />
+            </svg>
           </div>
+          <h2 className="font-bold">Total Problems</h2>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="font-bold mb-4">Most Frequent Vessel Calls</h2>
-          <div className="flex items-center justify-center h-32">
+        <div className="bg-white p-6 rounded-lg shadow text-center">
+          <h2 className="font-bold mb-2">Most Frequent Vessel Calls</h2>
+          <div className="flex items-center justify-center h-25">
             <div className="text-center">
               <span className="text-7xl font-bold text-red-900">{mostFrequentVessel || 'N/A'}</span>
-              <p className="text-lg text-gray-500">{frequencyPercentage}% of total calls</p>
+              <p className="text-md text-gray-500">{frequencyPercentage}% of total calls</p>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Grid Layout for Cards */}
       <div className="grid grid-cols-12 gap-6">
         {/* Bar Chart */}
         <div className="col-span-6 bg-white p-6 rounded-lg shadow">

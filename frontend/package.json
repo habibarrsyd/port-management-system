@@ -17,7 +17,7 @@
     "@mdi/js": "^7.4.47",
     "@mdi/react": "^1.6.1",
     "@mui/icons-material": "^7.3.1",
-    "@supabase/supabase-js": "^2.56.0",
+    "@supabase/supabase-js": "^2.57.0",
     "exceljs": "^4.4.0",
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.12.7",
