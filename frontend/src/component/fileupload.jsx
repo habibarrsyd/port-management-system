@@ -50,7 +50,7 @@ export default function FileUpload() {
   return (
     <div className="complete-upload">
       <div className="flex flex-col items-center text-center mt-[60px] w-[500px]">
-        <h5 className="font-bold text-[60px] mt-[40px]">Upload Excel File</h5>
+        <h4 className="font-bold text-[60px] mt-[40px]">Upload Excel File</h4>
 
         {/* Pilih File */}
         {!file ? (
