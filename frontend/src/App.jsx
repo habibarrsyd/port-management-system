@@ -7,6 +7,8 @@ import Navbar from "./component/Frame/Navbar";
 import TransactionsTable from "./pages/transaction";
 import Dashboard from "./pages/dashboard";
 import Card from "./component/cards";
+import Register from "./pages/register"
+import Login from "./pages/login"
 
 
 function App() {
@@ -15,8 +17,9 @@ function App() {
       {/* <StickyNavbar /> */}
       <Navbar />
         <Routes>
-          
         <Route path="/" element={<FileUpload/>}/>
+        <Route path="/login" element={<Login/>}/>
+        <Route path="/register" element={<Register/>}/>
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/upload" element={<FileUpload />} />
         <Route path="/transactions" element={<TransactionsTable />} />

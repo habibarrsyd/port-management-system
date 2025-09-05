@@ -112,7 +112,7 @@ export default function Navbar() {
                   </li>
                   <li>
                     <Link
-                      to="/logout"
+                      to="/login"
                       className="flex items-center gap-2 px-3 py-1 text-red-500 hover:bg-gray-100"
                       onClick={() => setIsOpen(false)}
                     >
