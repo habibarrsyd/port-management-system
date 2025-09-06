@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../Supabaseclient";
+import { ShoppingCart } from "lucide-react";
 
 export default function TransactionsTable() {
   const [transactions, setTransactions] = useState([]);
@@ -53,14 +54,14 @@ export default function TransactionsTable() {
   if (loading) return <p className="p-4">Loading...</p>;
 
 return (
-    <div className="p-[30px] mt-[80px]">
-      <div className="flex justify-between items-center mb-4 -mt-5">
-        <h2 className= "text-xl font-bold">Port Transactions</h2>
-        <span className="bg-[#f54040] text-white px-3 py-1 rounded-md text-sm font-semibold shadow-md">{transactions.length} total records</span>
-      </div>
+    <div className="p-[30px] mt-[50px]">
+      <div className="flex items-center mb-3">
+  <ShoppingCart className="h-6 w-6 mr-2 text-gray-700" />
+  <h2 className="text-xl font-bold">Port Transactions</h2>
+  </div>
 
       {/* 🔍 Search box */}
-      <div className="mb-5">
+      <div className="mb-6">
         <input
           type="text"
           placeholder="Search..."

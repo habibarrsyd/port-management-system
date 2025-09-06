@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Ship } from "lucide-react";
+import { ShipWheel, CalendarCheck, Anchor } from "lucide-react";
 import { HiChartBarSquare } from 'react-icons/hi2';
 import {
+  ResponsiveContainer,
   BarChart,
   Bar,
   LineChart,
@@ -17,7 +18,7 @@ import {
 } from 'recharts';
 import { supabase } from '../Supabaseclient';
 
-function Dropdown({ id, label, items, menuColor }) {
+function Dropdown({ id, label, items, menuColor, icon: Icon }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(label);
   const dropdownRef = useRef(null);
@@ -53,7 +54,10 @@ function Dropdown({ id, label, items, menuColor }) {
         aria-label="Dropdown"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {selected}
+        <div className="flex items-center">
+          {Icon && <Icon className="h-5 w-5 mr-2 text-gray-700" />}
+          {selected}
+        </div>
         <span
           className={`ml-2 w-4 h-4 transform ${isOpen ? 'rotate-180' : ''}`}
           style={{
@@ -108,7 +112,6 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch transaction count
         const { data: transactionData, error: transactionError } = await supabase
           .from('another')
           .select('*', { count: 'exact' });
@@ -119,7 +122,6 @@ export default function Dashboard() {
         }
         setTransactionCount(transactionData.length);
 
-        // Fetch unique ports
         const { data: portData, error: portError } = await supabase
           .from('another')
           .select('port')
@@ -134,7 +136,28 @@ export default function Dashboard() {
           .map(port => ({ label: port, href: '#', disabled: false }));
         setPortItems(uniquePorts);
 
-        // Fetch data for all metrics
+        const { data: vesselFrequencyData, error: vesselFrequencyError } = await supabase
+          .from('another')
+          .select('kapal')
+          .not('kapal', 'is', null);
+        if (vesselFrequencyError) {
+          console.error('Error fetching vessel frequency:', vesselFrequencyError);
+          setError('Failed to fetch vessel frequency data. Please try again.');
+          return;
+        }
+        const vesselCounts = vesselFrequencyData.reduce((acc, item) => {
+          const kapal = item.kapal;
+          if (kapal) {
+            acc[kapal] = (acc[kapal] || 0) + 1;
+          }
+          return acc;
+        }, {});
+        const sortedVessels = Object.entries(vesselCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([kapal]) => ({ label: kapal, href: '#', disabled: true }));
+        setVesselVoyageItems(sortedVessels);
+
         const { data: vesselData, error: vesselError } = await supabase
           .from('another')
           .select('kapal, td, tb, prod_td_ta, td_ta, tcl_tb, td_tcl, tb_ta, d20fl, d20mt, d40fl, d40mt, d10fl, d10mt, d21fl, d21mt, d40frfl, d40frmt, d45fl, d45mt, l20fl, l20mt, l40fl, l40mt, l10fl, l10mt, l21fl, l21mt, l40frfl, l40frmt, l45fl, l45mt, port')
@@ -177,7 +200,6 @@ export default function Dashboard() {
           return;
         }
 
-        // Fetch remarks data where remark is not null
         const { data: remarksRaw, error: remarksError } = await supabase
           .from('another')
           .select('kapal, remark')
@@ -189,7 +211,6 @@ export default function Dashboard() {
         }
         setRemarksData(remarksRaw);
 
-        // Process container data for stacked bar chart
         const dropColumns = [
           'd20fl', 'd20mt', 'd40fl', 'd40mt', 'd10fl', 'd10mt',
           'd21fl', 'd21mt', 'd40frfl', 'd40frmt', 'd45fl', 'd45mt'
@@ -199,7 +220,6 @@ export default function Dashboard() {
           'l21fl', 'l21mt', 'l40frfl', 'l40frmt', 'l45fl', 'l45mt'
         ];
 
-        // Aggregate container data by port
         const portContainerData = uniquePorts.reduce((acc, portItem) => {
           const port = portItem.label;
           const portData = vesselData.filter(item => item.port === port);
@@ -220,7 +240,6 @@ export default function Dashboard() {
 
         setStackedBarData(portContainerData);
 
-        // Process container data for pie chart
         let totalFull = 0;
         let totalEmpty = 0;
         const flColumns = [
@@ -246,7 +265,6 @@ export default function Dashboard() {
           { name: 'Empty', value: totalEmpty },
         ]);
 
-        // Parse function for hh:mm (or hh:mm:ss) to decimal hours
         const parseDurationToHours = (str) => {
           if (!str) return 0;
           const parts = str.split(':').map(Number);
@@ -259,7 +277,6 @@ export default function Dashboard() {
           return 0;
         };
 
-        // Calculate average td_ta per kapal for barData
         const tdTaData = vesselData.map(item => ({
           kapal: item.kapal,
           td_ta: parseDurationToHours(item.td_ta),
@@ -282,7 +299,6 @@ export default function Dashboard() {
 
         setBarData(averageTdTaData);
 
-        // Calculate average prod_td_ta per kapal for productivityData
         const prodData = vesselData.map(item => ({
           kapal: item.kapal,
           prod_td_ta: parseFloat(item.prod_td_ta),
@@ -305,7 +321,6 @@ export default function Dashboard() {
 
         setProductivityData(averageProdData);
 
-        // Calculate average waiting time (tb_ta)
         const waitingTimes = vesselData
           .map(item => parseDurationToHours(item.tb_ta))
           .filter(n => !isNaN(n));
@@ -313,7 +328,6 @@ export default function Dashboard() {
         const avgWaiting = waitingTimes.length > 0 ? sumWaiting / waitingTimes.length : 0;
         setAverageWaitingTime(avgWaiting);
 
-        // Calculate global average for berthing duration (tcl_tb)
         const berthingTimes = vesselData
           .map(item => parseDurationToHours(item.tcl_tb))
           .filter(n => !isNaN(n));
@@ -321,7 +335,6 @@ export default function Dashboard() {
         const avgBerthing = berthingTimes.length > 0 ? sumBerthing / berthingTimes.length : 0;
         setAverageBerthingDuration(avgBerthing);
 
-        // Calculate global average for time after completion (td_tcl)
         const timeAfterTimes = vesselData
           .map(item => parseDurationToHours(item.td_tcl))
           .filter(n => !isNaN(n));
@@ -329,34 +342,18 @@ export default function Dashboard() {
         const avgTimeAfter = timeAfterTimes.length > 0 ? sumTimeAfter / timeAfterTimes.length : 0;
         setAverageTimeAfterCompletion(avgTimeAfter);
 
-        // Calculate occupancy
         const totalBerthedTime = avgBerthing + avgTimeAfter;
         const calculatedOccupancy = totalBerthedTime > 0 ? (avgBerthing / totalBerthedTime) * 100 : 0;
         setOccupancy(calculatedOccupancy);
 
-        // Calculate most frequent vessel calls
-        const vesselCounts = vesselData.reduce((acc, item) => {
-          const kapal = item.kapal;
-          if (kapal) {
-            acc[kapal] = (acc[kapal] || 0) + 1;
-          }
-          return acc;
-        }, {});
         if (Object.keys(vesselCounts).length > 0) {
           const maxVessel = Object.keys(vesselCounts).reduce((a, b) => vesselCounts[a] > vesselCounts[b] ? a : b);
           setMostFrequentVessel(maxVessel);
-          const totalVessels = vesselData.length; // Total data entries with kapal not null
+          const totalVessels = vesselData.length;
           const percentage = (vesselCounts[maxVessel] / totalVessels) * 100;
           setFrequencyPercentage(percentage.toFixed(2));
         }
 
-        // For Vessel / Voyage dropdown
-        const uniqueVessels = [...new Set(vesselData.map(item => item.kapal))]
-          .filter(kapal => kapal)
-          .map(kapal => ({ label: `${kapal}`, href: '#', disabled: false }));
-        setVesselVoyageItems(uniqueVessels);
-
-        // Fetch unique time periods
         const { data: periodData, error: periodError } = await supabase
           .from('another')
           .select('period')
@@ -381,9 +378,12 @@ export default function Dashboard() {
 
   return (
     <div className="p-10 mt-10 w-screen">
-      <h1 className="text-3xl font-bold mb-2">
-        Port Operations Dashboard
-      </h1>
+      <div className="flex items-center mb-2">
+        <ShipWheel className="h-8 w-8 mr-2 text-red-900" />
+        <h1 className="text-3xl font-bold">
+          Port Operations Dashboard
+        </h1>
+      </div>
 
       {/* Error Display */}
       {error && (
@@ -393,10 +393,29 @@ export default function Dashboard() {
       )}
 
       {/* Filters */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Dropdown id="dropdown-time" label="Time Period" items={timePeriodItems} menuColor="bg-blue-50" />
-        <Dropdown id="dropdown-vessel" label="Vessel / Voyage" items={vesselVoyageItems} menuColor="bg-green-50" />
-        <Dropdown id="dropdown-port" label="Port" items={portItems} menuColor="bg-yellow-50" />
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="text-gray-600">
+          <Dropdown
+            id="dropdown-time"
+            label="Time Period"
+            items={timePeriodItems}
+            menuColor="bg-gray-50"
+            icon={CalendarCheck}
+          />
+        </div>
+        
+        <Dropdown
+          id="dropdown-vessel"
+          label="Top 5 Vessel Frequent"
+          items={vesselVoyageItems}
+          menuColor="bg-gray-50"
+        />
+        <Dropdown
+          id="dropdown-port"
+          label="Port"
+          items={portItems}
+          menuColor="bg-gray-50"
+        />
       </div>
 
       {/* 3 New Cards */}
@@ -429,17 +448,19 @@ export default function Dashboard() {
         </div>
       </div>
       <div className="grid grid-cols-12 gap-6">
-        {/* Bar Chart */}
+        {/* Bar Chart (Port Stay) */}
         <div className="col-span-6 bg-white p-6 rounded-lg shadow">
           <h2 className="font-bold mb-4">Port Stay</h2>
-          <div style={{ marginLeft: -40 }}>
-            <BarChart width={550} height={200} data={barData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="kapal" interval="preserveStartEnd" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#820606ff" />
-            </BarChart>
+          <div className="w-full h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="kapal" interval="preserveStartEnd" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#820606ff" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -465,61 +486,73 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Line Chart */}
+        {/* Line Chart (Productivity) */}
         <div className="col-span-6 bg-white p-6 rounded-lg shadow">
           <h2 className="font-bold mb-4">Productivity</h2>
-          <div style={{ marginLeft: -40 }}>
-            <LineChart width={550} height={200} data={productivityData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="kapal" interval="preserveStartEnd" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#500606ff" strokeWidth={2} />
-            </LineChart>
+          <div className="w-full h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={productivityData} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="kapal"
+                  interval="preserveStartEnd"
+                  label={{ value: 'Vessel Type', position: 'bottom', offset: 4 }}
+                />
+                <YAxis
+                  label={{ value: 'Value', angle: -90, position: 'left', offset: 0 }}
+                />
+                <Tooltip />
+                <Line type="monotone" dataKey="value" stroke="#500606ff" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Stacked Bar + Pie */}
+        {/* Stacked Bar + Pie (Container Composition) */}
         <div className="col-span-6 bg-white p-6 rounded-lg shadow">
           <h2 className="font-bold mb-4">Container Composition</h2>
-          <div className="grid grid-cols-2">
-            <BarChart width={250} height={250} data={stackedBarData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="port" angle={0} textAnchor="end" interval="preserveStartEnd" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="drop" stackId="a" fill="#5a0202ff" name="Drop Containers" />
-              <Bar dataKey="load" stackId="a" fill="#aeaba9ff" name="Load Containers" />
-            </BarChart>
-            <PieChart 
-              width={250} 
-              height={250} 
-              margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-            >
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="45%"
-                outerRadius={70}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-              >
-                {pieData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]} 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="w-full h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stackedBarData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="port" angle={0} textAnchor="end" interval="preserveStartEnd" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="drop" stackId="a" fill="#5a0202ff" name="Drop Containers" />
+                  <Bar dataKey="load" stackId="a" fill="#aeaba9ff" name="Load Containers" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="w-full h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="45%"
+                    outerRadius={70}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={COLORS[index % COLORS.length]} 
+                      />
+                    ))}
+                  </Pie>
+                  <Legend 
+                    verticalAlign="bottom" 
+                    align="center" 
+                    iconType="circle" 
+                    wrapperStyle={{ fontSize: '12px' }}
                   />
-                ))}
-              </Pie>
-              <Legend 
-                verticalAlign="bottom" 
-                align="center" 
-                iconType="circle" 
-                wrapperStyle={{ fontSize: '12px' }}
-              />
-            </PieChart>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
