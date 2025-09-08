@@ -1,18 +1,43 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient"; // pastikan sudah setup client
 import signup_icon from "../assets/images/signup_icon.png";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", form);
-    alert(`Register success!\nName: ${form.name}\nEmail: ${form.email}`);
+    setError(null);
+
+    // 1. Sign up user ke Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+    });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    const user = data.user;
+
+    // 2. Simpan name ke tabel profiles (pakai id user dari auth.users)
+    if (user) {
+      await supabase.from("profiles").insert([
+        { id: user.id, name: form.name }
+      ]);
+    }
+
+    alert("Register success! Please login.");
+    navigate("/login"); // redirect ke login page
   };
 
   return (
@@ -21,11 +46,13 @@ export default function Register() {
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-lg shadow-md w-full max-w-md space-y-4"
       >
-        <div class="flex justify-center">
+        <div className="flex justify-center">
           <img src={signup_icon} alt="signup_icon" />
         </div>
         <h2 className="text-2xl font-bold text-center">Register</h2>
-        <p class="text-center">Please input your data to register</p>
+        <p className="text-center">Please input your data to register</p>
+
+        {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <input
           type="text"
@@ -63,13 +90,12 @@ export default function Register() {
         >
           Register
         </button>
-        
-        <p class="flex justify-center">
-          Already have account ?  <span>
-            <Link to="/login">
-                 Login here
-            </Link>
-          </span>
+
+        <p className="flex justify-center">
+          Already have account?{" "}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Login here
+          </Link>
         </p>
       </form>
     </div>

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import FileUpload from "./component/fileupload";
 import SuccessPage from "./pages/anotherhome";
 import { ToastContainer } from "react-toastify";
@@ -6,27 +6,71 @@ import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./component/Frame/Navbar";
 import TransactionsTable from "./pages/transaction";
 import Dashboard from "./pages/dashboard";
-import Card from "./component/cards";
-import Register from "./pages/register"
-import Login from "./pages/login"
+import Register from "./pages/register";
+import Login from "./pages/login";
+import ProtectedRoute from "./component/protectedroute";
+import { supabase } from "./supabaseClient";
+// import logout from "./pages/logout";
 
+function LayoutWithNavbar({ children }) {
+  const location = useLocation();
+
+  // sembunyikan navbar di /login dan /register
+  const hideNavbar = location.pathname === "/login" || location.pathname === "/register";
+
+  return (
+    <>
+      {!hideNavbar && <Navbar />}
+      {children}
+    </>
+  );
+}
 
 function App() {
   return (
     <Router>
-      {/* <StickyNavbar /> */}
-      <Navbar />
+      <LayoutWithNavbar>
         <Routes>
-          
-        <Route path="/" element={<Login/>}/>
-        <Route path="/success" element={<SuccessPage />} />
-        <Route path="/upload" element={<FileUpload />} />
-        <Route path="/transactions" element={<TransactionsTable />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/login" element={<Login/>}/>
-        <Route path="/register" element={<Register/>}/>
+          {/* Auth Pages */}
+          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-      </Routes>
+          {/* Protected Pages */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upload"
+            element={
+              <ProtectedRoute>
+                <FileUpload />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transactions"
+            element={
+              <ProtectedRoute>
+                <TransactionsTable />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/success"
+            element={
+              <ProtectedRoute>
+                <SuccessPage />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </LayoutWithNavbar>
       <ToastContainer position="top-right" autoClose={3000} />
     </Router>
   );

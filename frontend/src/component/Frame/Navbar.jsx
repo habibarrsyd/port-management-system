@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../../supabaseClient";
 import Icon from "@mdi/react";
 import { mdiMenu, mdiClose, mdiServerNetwork } from "@mdi/js";
 
@@ -7,7 +8,6 @@ const Dropdown = ({ id, buttonContent, menuContent }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -46,19 +46,26 @@ const Dropdown = ({ id, buttonContent, menuContent }) => {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   const link = [
-    { name: "Home", path: "/" },
+    { name: "Upload", path: "/upload" },
     { name: "Dashboard", path: "/dashboard" },
     { name: "Transactions", path: "/transactions" },
-    { name: "Upload", path: "/upload" },
-    
   ];
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error logging out:", error.message);
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="shadow-md w-full fixed bg-white top-0 left-0 z-10">
       <div className="flex items-center justify-between bg-white py-2 md:px-8 px-6">
-        {/* Logo */}
         <div className="font-bold text-xl cursor-pointer flex items-center gap-2">
           <img
             src="./src/assets/images/logo-spil.png"
@@ -67,8 +74,6 @@ export default function Navbar() {
           />
           Port Monitoring System
         </div>
-
-        {/* Desktop Menu */}
         <div className="navbar-desktop md:flex items-center gap-2 text-lg">
           <ul className="flex items-center gap-4">
             {link.map((item) => (
@@ -78,14 +83,14 @@ export default function Navbar() {
             ))}
           </ul>
           <div className="ml-3">
-            <Dropdown className = ""
+            <Dropdown
               id="avatar-dropdown"
               buttonContent={
                 <div className="avatar size-7 rounded-full overflow-hidden mt-2">
-                    <img
-                      src="https://cdn.flyonui.com/fy-assets/avatar/avatar-1.png"
-                      alt="avatar"
-                    />
+                  <img
+                    src="https://cdn.flyonui.com/fy-assets/avatar/avatar-1.png"
+                    alt="avatar"
+                  />
                 </div>
               }
               menuContent={
@@ -101,32 +106,22 @@ export default function Navbar() {
                     </Link>
                   </li>
                   <li>
-                    <Link
-                      to="/settings"
-                      className="flex items-center gap-2 px-3 py-1 text-[#353333] hover:bg-gray-100"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Icon path={mdiServerNetwork} size={0.8} className="text-blue-600" />
-                      Settings
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/logout"
-                      className="flex items-center gap-2 px-3 py-1 text-red-500 hover:bg-gray-100"
-                      onClick={() => setIsOpen(false)}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center gap-2 px-3 py-1 text-red-500 font-medium hover:bg-gray-100 w-full text-left"
                     >
                       <Icon path={mdiServerNetwork} size={0.8} className="text-red-500" />
                       Logout
-                    </Link>
+                    </button>
                   </li>
                 </>
               }
             />
           </div>
         </div>
-
-        {/* Mobile Hamburger Icon */}
         <div
           onClick={() => setOpen(!open)}
           className="text-3xl cursor-pointer md:hidden"
@@ -134,8 +129,6 @@ export default function Navbar() {
           <Icon path={open ? mdiClose : mdiMenu} size={1.2} />
         </div>
       </div>
-
-      {/* Mobile Menu */}
       {open && (
         <ul className="md:hidden absolute bg-white w-full left-0 top-10 flex flex-col items-start gap-3 py-4 px-8 text-lg shadow-md transition-all duration-500 ease-in-out">
           {link.map((item) => (
@@ -152,15 +145,17 @@ export default function Navbar() {
               Profile
             </Link>
           </li>
-          <li className="w-full hover:text-blue-500">
-            <Link to="/settings" onClick={() => setOpen(false)}>
-              Settings
-            </Link>
-          </li>
           <li className="w-full text-red-500 hover:text-blue-500">
-            <Link to="/logout" onClick={() => setOpen(false)}>
+            <button
+              onClick={() => {
+                handleLogout();
+                setOpen(false);
+              }}
+              className="flex items-center gap-2 px-3 py-1 font-medium hover:bg-gray-100 w-full text-left"
+            >
+              <Icon path={mdiServerNetwork} size={0.8} className="text-red-500" />
               Logout
-            </Link>
+            </button>
           </li>
         </ul>
       )}

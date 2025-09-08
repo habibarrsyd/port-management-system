@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "../Supabaseclient";
+import { supabase } from "../supabaseClient";
 import { ShoppingCart } from "lucide-react";
 
 export default function TransactionsTable() {
@@ -13,18 +13,29 @@ export default function TransactionsTable() {
   }, []);
 
   async function fetchTransactions() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("another")
-      .select(
-        "id, kapal, voy_arr, voy_dep, asal, tujuan, td_ta, ta_taob, port, remark, period, port_route"
-      );
+  setLoading(true);
 
-    if (error) console.error(error);
-    else setTransactions(data);
+  // 🔑 Ambil user_id dari session
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    console.error("User not authenticated");
     setLoading(false);
+    return;
   }
 
+  // ✅ Filter hanya transaksi milik user ini
+  const { data, error } = await supabase
+    .from("another")
+    .select("id, kapal, voy_arr, voy_dep, asal, tujuan, td_ta, ta_taob, port, remark, period, port_route, user_id")
+    .eq('user_id', user.id); // <-- INI KUNCI UTAMANYA!
+
+  if (error) {
+    console.error("Error fetching transactions:", error);
+  } else {
+    setTransactions(data);
+  }
+  setLoading(false);
+}
   // Filtering (search)
   const filteredData = transactions.filter((t) =>
     Object.values(t).some((val) =>
