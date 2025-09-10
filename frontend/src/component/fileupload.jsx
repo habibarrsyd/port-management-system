@@ -1,44 +1,56 @@
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 import { XCircleIcon } from "lucide-react";
-import { supabase } from "../supabaseClient"; // ⬅️ pastikan sudah ada file supabaseClient.js
+import { supabase } from "../supabaseClient";
 
 export default function FileUpload() {
   const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
-      setMessage("");
     }
   };
 
   const handleRemoveFile = () => {
     setFile(null);
-    setMessage("");
   };
 
   const handleUpload = async () => {
     if (!file) {
-      toast.error("Pilih file dulu!");
+      toast.error("Pilih file dulu!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
 
     // 🔑 ambil user_id dari Supabase
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      toast.error("Anda harus login dulu!");
+      toast.error("Anda harus login dulu!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
     const userId = session.user.id;
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("user_id", userId); // ⬅️ kirim user_id
+    formData.append("user_id", userId);
 
     try {
       const res = await fetch("http://127.0.0.1:5000/upload", {
@@ -48,22 +60,39 @@ export default function FileUpload() {
 
       if (!res.ok) throw new Error("Upload gagal");
 
-      const json = await res.json();
-      setMessage(json.message);
-      toast.success("File berhasil di-upload!");
-      navigate("/success");
+      await res.json();
+      toast.success("File berhasil di-upload!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      // Reset file setelah upload berhasil
+      setTimeout(() => {
+        setFile(null);
+      }, 2500);
     } catch (err) {
-      toast.error("Upload gagal: " + err.message);
+      toast.error("Upload gagal: " + err.message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
   return (
     <div className="complete-upload">
       <div className="flex flex-col items-center text-center mt-[60px] w-[500px]">
-        <h4 className="font-bold text-[60px] mt-[40px]">Upload Excel File</h4>
+        <h4 className="font-bold text-[60px] mt-[40px] text-gray-900">Upload Excel File</h4>
 
         {!file ? (
-          <label className="cursor-pointer bg-[#c51717] px-[70px] py-[10px] rounded-[15px] text-[40px] text-white hover:bg-[#d0d6d1] mt-[40px]">
+          <label className="cursor-pointer bg-[#c51717] px-[70px] py-[10px] rounded-[15px] text-[40px] text-white hover:bg-[#ED5555] mt-[10px]">
             Select File
             <input
               type="file"
@@ -99,9 +128,6 @@ export default function FileUpload() {
           </button>
         )}
 
-        {message && (
-          <p className="mt-10 text-green-600 font-medium">{message}</p>
-        )}
         <ToastContainer />
       </div>
     </div>

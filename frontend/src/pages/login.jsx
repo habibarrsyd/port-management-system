@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient"; // pastikan sudah setup
+import { supabase } from "../supabaseClient";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import signinIcon from "../assets/images/signin_icon.png";
 import signinIcon2 from "../assets/images/signin_icon2.png";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -15,7 +16,6 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
 
     // Supabase login
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -24,12 +24,32 @@ export default function Login() {
     });
 
     if (error) {
-      setError(error.message);
+      toast.error('Login failed. Please check your credentials.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
 
+    toast.success('Login successful!', {
+      position: "top-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+
     console.log("User logged in:", data.user);
-    navigate("/upload"); // redirect ke dashboard
+    
+    // Delay navigasi agar toast sempat muncul
+    setTimeout(() => {
+      navigate("/upload");
+    }, 2500); // 2.5 detik (sesuaikan dengan autoClose toast)
   };
 
   return (
@@ -44,10 +64,6 @@ export default function Login() {
 
         <h2 className="text-2xl font-bold text-center">Login</h2>
         <p className="flex justify-center">Please sign in to continue</p>
-
-        {error && (
-          <p className="text-red-500 text-sm text-center">{error}</p>
-        )}
 
         <input
           type="email"
@@ -78,12 +94,13 @@ export default function Login() {
         </button>
 
         <p className="flex justify-center">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link to="/register" className="text-blue-600 hover:underline">
             Register here
           </Link>
         </p>
       </form>
+      <ToastContainer />
     </div>
   );
 }

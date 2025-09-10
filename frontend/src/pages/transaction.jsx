@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { ShoppingCart } from "lucide-react";
+import { MdArrowCircleRight } from 'react-icons/md';
 
 export default function TransactionsTable() {
   const [transactions, setTransactions] = useState([]);
@@ -13,29 +14,29 @@ export default function TransactionsTable() {
   }, []);
 
   async function fetchTransactions() {
-  setLoading(true);
+    setLoading(true);
 
-  // 🔑 Ambil user_id dari session
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    console.error("User not authenticated");
+    // 🔑 Ambil user_id dari session
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.error("User not authenticated");
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("another")
+      .select("id, kapal, voy_arr, voy_dep, asal, tujuan, td_ta, ta_taob, port, remark, period, port_route, user_id")
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error("Error fetching transactions:", error);
+    } else {
+      setTransactions(data);
+    }
     setLoading(false);
-    return;
   }
 
-  // ✅ Filter hanya transaksi milik user ini
-  const { data, error } = await supabase
-    .from("another")
-    .select("id, kapal, voy_arr, voy_dep, asal, tujuan, td_ta, ta_taob, port, remark, period, port_route, user_id")
-    .eq('user_id', user.id); // <-- INI KUNCI UTAMANYA!
-
-  if (error) {
-    console.error("Error fetching transactions:", error);
-  } else {
-    setTransactions(data);
-  }
-  setLoading(false);
-}
   // Filtering (search)
   const filteredData = transactions.filter((t) =>
     Object.values(t).some((val) =>
@@ -64,12 +65,17 @@ export default function TransactionsTable() {
 
   if (loading) return <p className="p-4">Loading...</p>;
 
-return (
-    <div className="p-[30px] mt-[50px]">
-      <div className="flex items-center mb-3">
-  <ShoppingCart className="h-6 w-6 mr-2 text-gray-700" />
-  <h2 className="text-xl font-bold">Port Transactions</h2>
-  </div>
+  return (
+    <div className="p-[30px] mt-[60px]">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center">
+          <ShoppingCart className="h-6 w-6 mr-2 text-gray-700" />
+          <h2 className="text-xl font-bold">Port Transactions</h2>
+        </div>
+        <span className="bg-[#f54040] text-white px-3 py-1 rounded-md text-sm font-semibold shadow-md">
+          {transactions.length} total records
+        </span>
+      </div>
 
       {/* 🔍 Search box */}
       <div className="mb-6">
@@ -83,100 +89,102 @@ return (
         />
       </div>
 
-
       <div className="overflow-x-auto overflow-y-auto rounded-xl min-h-[200px] max-h-[calc(100vh-150px)] shadow">
-      <table className="w-full border-collapse bg-white rounded-xl table-fixed">
-        <thead className="bg-gradient-to-r from-red-600 to-red-950 text-white text-sm">
-          <tr>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("kapal")}
-            >
-              Ship
-            </th>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("voy_arr")}
-            >
-              Voyage
-            </th>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("asal")}
-            >
-              Route
-            </th>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("td_ta")}
-            >
-              Td_Ta
-            </th>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("ta_taob")}
-            >
-              Ta_Taob
-            </th>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("port")}
-            >
-              Port
-            </th>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("remark")}
-            >
-              Problem
-            </th>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("period")}
-            >
-              Period
-            </th>
-            <th
-              className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
-              onClick={() => requestSort("port_route")}
-            >
-              Port Route
-            </th>
-          </tr>
-        </thead>
-        <tbody className="text-sm">
-          {sortedData.length > 0 ? (
-            sortedData.map((t) => (
-              <tr
-                key={t.id}
-                className="even:bg-gray-50 hover:bg-sky-50 transition-colors"
-              >
-                <td className="px-3 py-3">{t.kapal}</td>
-                <td className="px-3 py-3">
-                  {t.voy_arr} → {t.voy_dep}
-                </td>
-                <td className="px-3 py-3">
-                  {t.asal} → {t.tujuan}
-                </td>
-                <td className="px-3 py-3">{t.td_ta}</td>
-                <td className="px-3 py-3">{t.ta_taob}</td>
-                <td className="px-3 py-3">{t.port}</td>
-                <td className="px-3 py-3 text-red-600 font-medium">{t.remark}</td>
-                <td className="px-3 py-3">{t.period}</td>
-                <td className="px-3 py-3">{t.port_route}</td>
-              </tr>
-            ))
-          ) : (
+        <table className="w-full border-collapse bg-white rounded-xl table-fixed">
+          <thead className="bg-gradient-to-r from-red-600 to-red-950 text-white text-sm">
             <tr>
-              <td colSpan="9" className="text-center py-6 italic text-gray-500">
-                No data found
-              </td>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("kapal")}
+              >
+                Ship
+              </th>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("voy_arr")}
+              >
+                Voyage
+              </th>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("asal")}
+              >
+                Route
+              </th>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("td_ta")}
+              >
+                Td_Ta
+              </th>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("ta_taob")}
+              >
+                Ta_Taob
+              </th>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("port")}
+              >
+                Port
+              </th>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("remark")}
+              >
+                Problem
+              </th>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("period")}
+              >
+                Period
+              </th>
+              <th
+                className="px-3 py-3 text-left cursor-pointer select-none hover:bg-white/20"
+                onClick={() => requestSort("port_route")}
+              >
+                Port Route
+              </th>
             </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-
+          </thead>
+          <tbody className="text-sm">
+            {sortedData.length > 0 ? (
+              sortedData.map((t) => (
+                <tr
+                  key={t.id}
+                  className="even:bg-gray-50 hover:bg-sky-50 transition-colors"
+                >
+                  <td className="px-3 py-3">{t.kapal}</td>
+                  <td className="px-3 py-3 flex items-center gap-1">
+                    {t.voy_arr}
+                    <MdArrowCircleRight className="text-red-700 w-4 h-4" />
+                    {t.voy_dep}
+                  </td>
+                  <td className="px-3 py-3">
+                    {t.asal}
+                    <MdArrowCircleRight className="text-blue-700 w-4 h-4" />
+                    {t.tujuan}
+                  </td>
+                  <td className="px-3 py-3">{t.td_ta}</td>
+                  <td className="px-3 py-3">{t.ta_taob}</td>
+                  <td className="px-3 py-3">{t.port}</td>
+                  <td className="px-3 py-3 text-red-600 font-medium">{t.remark}</td>
+                  <td className="px-3 py-3">{t.period}</td>
+                  <td className="px-3 py-3">{t.port_route}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="9" className="text-center py-6 italic text-gray-500">
+                  No data found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -291,7 +291,7 @@ export default function Dashboard() {
 
           // Handle "0", "0:00", "0:00:00"
           if (str === "0" || str === "0:00" || str === "0:00:00") {
-            return 0; // ini valid, bukan error
+            return 0;
           }
 
           // Handle "HH:MM" or "HH:MM:SS"
@@ -314,10 +314,76 @@ export default function Dashboard() {
           console.warn("⚠️ Cannot parse duration:", str);
           return 0;
         };
-        const tdTaData = vesselData.map(item => ({
-          kapal: item.kapal,
-          td_ta: parseDurationToHours(item.td_ta),
-        })).filter(item => !isNaN(item.td_ta));
+
+        // DEBUG: Log raw data for occupancy calculation
+        console.log("=== OCCUPANCY DEBUG ===");
+        console.log("vesselData length:", vesselData.length);
+        console.log("Sample tcl_tb values:", vesselData.slice(0, 3).map(item => ({ kapal: item.kapal, tcl_tb: item.tcl_tb })));
+        console.log("Sample td_tcl values:", vesselData.slice(0, 3).map(item => ({ kapal: item.kapal, td_tcl: item.td_tcl })));
+
+        const berthingTimes = vesselData
+          .map(item => parseDurationToHours(item.tcl_tb))
+          .filter(n => !isNaN(n) && n > 0); // Filter out 0 and NaN
+        console.log("berthingTimes (filtered):", berthingTimes);
+
+        const timeAfterTimes = vesselData
+          .map(item => parseDurationToHours(item.td_tcl))
+          .filter(n => !isNaN(n) && n > 0); // Filter out 0 and NaN
+        console.log("timeAfterTimes (filtered):", timeAfterTimes);
+
+        const validBerthingCount = berthingTimes.length;
+        const validTimeAfterCount = timeAfterTimes.length;
+
+        console.log("validBerthingCount:", validBerthingCount);
+        console.log("validTimeAfterCount:", validTimeAfterCount);
+
+        let avgBerthing = 0;
+        let avgTimeAfter = 0;
+
+        if (validBerthingCount > 0) {
+          avgBerthing = berthingTimes.reduce((a, b) => a + b, 0) / validBerthingCount;
+        }
+        if (validTimeAfterCount > 0) {
+          avgTimeAfter = timeAfterTimes.reduce((a, b) => a + b, 0) / validTimeAfterCount;
+        }
+
+        setAverageBerthingDuration(avgBerthing);
+        setAverageTimeAfterCompletion(avgTimeAfter);
+
+        // Calculate occupancy based on valid data
+        if (validBerthingCount > 0 && validTimeAfterCount > 0) {
+          // Use the minimum count to ensure fair comparison
+          const minCount = Math.min(validBerthingCount, validTimeAfterCount);
+          const totalBerthingTime = avgBerthing * minCount;
+          const totalTimeAfterTime = avgTimeAfter * minCount;
+          const totalTime = totalBerthingTime + totalTimeAfterTime;
+          const newOccupancy = totalTime > 0 ? (totalBerthingTime / totalTime) * 100 : 0;
+          setOccupancy(newOccupancy);
+          console.log("Occupancy calculated:", newOccupancy.toFixed(2), "%");
+          console.log("totalBerthingTime:", totalBerthingTime.toFixed(2));
+          console.log("totalTimeAfterTime:", totalTimeAfterTime.toFixed(2));
+          console.log("totalTime:", totalTime.toFixed(2));
+        } else if (validBerthingCount > 0) {
+          // Only berthing data available
+          setOccupancy(100);
+          console.log("Only berthing data available - occupancy set to 100%");
+        } else if (validTimeAfterCount > 0) {
+          // Only time after data available
+          setOccupancy(0);
+          console.log("Only time after data available - occupancy set to 0%");
+        } else {
+          // No valid data
+          setOccupancy(0);
+          console.log("No valid data for occupancy calculation");
+        }
+
+        // Process bar data (Port Stay) - Fixed to use td_ta
+        const tdTaData = vesselData
+          .map(item => ({
+            kapal: item.kapal,
+            td_ta: parseDurationToHours(item.td_ta),
+          }))
+          .filter(item => !isNaN(item.td_ta) && item.td_ta > 0); // Filter out 0 and NaN
         const groupedTdTaData = tdTaData.reduce((acc, curr) => {
           const { kapal, td_ta } = curr;
           if (!acc[kapal]) acc[kapal] = { sum: 0, count: 0 };
@@ -332,10 +398,12 @@ export default function Dashboard() {
         setBarData(averageTdTaData);
 
         // Process productivity data
-        const prodData = vesselData.map(item => ({
-          kapal: item.kapal,
-          prod_td_ta: parseFloat(item.prod_td_ta),
-        })).filter(item => !isNaN(item.prod_td_ta));
+        const prodData = vesselData
+          .map(item => ({
+            kapal: item.kapal,
+            prod_td_ta: parseFloat(item.prod_td_ta),
+          }))
+          .filter(item => !isNaN(item.prod_td_ta) && item.prod_td_ta > 0); // Filter out 0 and NaN
         const groupedProdData = prodData.reduce((acc, curr) => {
           const { kapal, prod_td_ta } = curr;
           if (!acc[kapal]) acc[kapal] = { sum: 0, count: 0 };
@@ -349,25 +417,11 @@ export default function Dashboard() {
         }));
         setProductivityData(averageProdData);
 
-        // Calculate averages
-        const waitingTimes = vesselData.map(item => parseDurationToHours(item.tb_ta)).filter(n => !isNaN(n));
+        // Calculate waiting time (tb_ta) - Fixed filter
+        const waitingTimes = vesselData
+          .map(item => parseDurationToHours(item.tb_ta))
+          .filter(n => !isNaN(n) && n > 0); // Filter out 0 and NaN
         setAverageWaitingTime(waitingTimes.length > 0 ? waitingTimes.reduce((a, b) => a + b, 0) / waitingTimes.length : 0);
-
-        const berthingTimes = vesselData.map(item => parseDurationToHours(item.tcl_tb)).filter(n => !isNaN(n));
-        setAverageBerthingDuration(berthingTimes.length > 0 ? berthingTimes.reduce((a, b) => a + b, 0) / berthingTimes.length : 0);
-
-        const timeAfterTimes = vesselData.map(item => parseDurationToHours(item.td_tcl)).filter(n => !isNaN(n));
-        setAverageTimeAfterCompletion(timeAfterTimes.length > 0 ? timeAfterTimes.reduce((a, b) => a + b, 0) / timeAfterTimes.length : 0);
-
-        const totalBerthedTime = averageBerthingDuration + averageTimeAfterCompletion;
-        if (totalBerthedTime > 0) {
-          setOccupancy((averageBerthingDuration / totalBerthedTime) * 100);
-        } else if (averageBerthingDuration === 0 && averageTimeAfterCompletion === 0) {
-          // Jika semua durasi 0, anggap occupancy 100%? atau 0%? sesuai logika bisnis
-          setOccupancy(100); // atau 0, atau NaN — sesuai kebutuhan
-        } else {
-          setOccupancy(0);
-        }
 
         // Most frequent vessel
         if (Object.keys(vesselCounts).length > 0) {
@@ -404,7 +458,7 @@ export default function Dashboard() {
   return (
     <div className="p-10 mt-10 w-screen">
       <div className="flex items-center mb-2">
-        <ShipWheel className="h-8 w-8 mr-2 text-red-900" />
+        <ShipWheel className="h-8 w-8 mr-2 text-gray-900" />
         <h1 className="text-3xl font-bold">Port Operations Dashboard</h1>
       </div>
 
@@ -476,7 +530,9 @@ export default function Dashboard() {
           <div className="flex items-center justify-center h-25">
             <div className="text-center">
               <span className="text-7xl font-bold text-red-900">{mostFrequentVessel || 'N/A'}</span>
-              <p className="text-md text-gray-500">{frequencyPercentage}% of total calls</p>
+              <p className="text-md text-gray-500">
+                {frequencyPercentage.toFixed(2)}% of total calls
+              </p>
             </div>
           </div>
         </div>
@@ -487,14 +543,18 @@ export default function Dashboard() {
           <h2 className="font-bold mb-4">Port Stay</h2>
           <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="kapal" interval="preserveStartEnd" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#820606ff" />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="kapal" interval="preserveStartEnd" />
+              <YAxis
+                tickFormatter={(value) => value.toFixed(2)}
+              />
+              <Tooltip
+                formatter={(value) => Number(value).toFixed(2)}
+              />
+              <Bar dataKey="value" fill="#820606ff" />
+            </BarChart>
+          </ResponsiveContainer>
           </div>
         </div>
 
@@ -523,18 +583,31 @@ export default function Dashboard() {
           <h2 className="font-bold mb-4">Productivity</h2>
           <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={productivityData} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="kapal"
-                  interval="preserveStartEnd"
-                  label={{ value: 'Vessel Type', position: 'bottom', offset: 4 }}
-                />
-                <YAxis label={{ value: 'Value', angle: -90, position: 'left', offset: 0 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="value" stroke="#500606ff" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+      <LineChart
+        data={productivityData}
+        margin={{ top: 5, right: 20, left: 10, bottom: 20 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis
+          dataKey="kapal"
+          interval="preserveStartEnd"
+          label={{ value: "Vessel Type", position: "bottom", offset: 4 }}
+        />
+        <YAxis
+          label={{ value: "Value", angle: -90, position: "left", offset: 0 }}
+          tickFormatter={(value) => value.toFixed(2)}
+        />
+        <Tooltip
+          formatter={(value) => Number(value).toFixed(2)}
+        />
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke="#500606ff"
+          strokeWidth={2}
+        />
+      </LineChart>
+    </ResponsiveContainer>
           </div>
         </div>
 

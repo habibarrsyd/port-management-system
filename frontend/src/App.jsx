@@ -12,15 +12,16 @@ import ProtectedRoute from "./component/protectedroute";
 import { supabase } from "./supabaseClient";
 // import logout from "./pages/logout";
 
+// Auth Layout - tanpa navbar
+function AuthLayout({ children }) {
+  return <>{children}</>;
+}
+
+// Protected Layout - dengan navbar
 function LayoutWithNavbar({ children }) {
-  const location = useLocation();
-
-  // sembunyikan navbar di /login dan /register
-  const hideNavbar = location.pathname === "/login" || location.pathname === "/register";
-
   return (
     <>
-      {!hideNavbar && <Navbar />}
+      <Navbar />
       {children}
     </>
   );
@@ -29,48 +30,54 @@ function LayoutWithNavbar({ children }) {
 function App() {
   return (
     <Router>
-      <LayoutWithNavbar>
-        <Routes>
-          {/* Auth Pages */}
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+      <Routes>
+        {/* Auth Pages - tanpa navbar */}
+        <Route path="/" element={<AuthLayout><Login /></AuthLayout>} />
+        <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+        <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
 
-          {/* Protected Pages */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
+        {/* Protected Pages - dengan navbar */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <LayoutWithNavbar>
                 <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/upload"
-            element={
-              <ProtectedRoute>
+              </LayoutWithNavbar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <ProtectedRoute>
+              <LayoutWithNavbar>
                 <FileUpload />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/transactions"
-            element={
-              <ProtectedRoute>
+              </LayoutWithNavbar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <LayoutWithNavbar>
                 <TransactionsTable />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/success"
-            element={
-              <ProtectedRoute>
+              </LayoutWithNavbar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/success"
+          element={
+            <ProtectedRoute>
+              <LayoutWithNavbar>
                 <SuccessPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </LayoutWithNavbar>
+              </LayoutWithNavbar>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
     </Router>
   );
