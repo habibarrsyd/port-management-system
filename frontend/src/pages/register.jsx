@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient"; // pastikan sudah setup client
+import { supabase } from "../supabaseClient"; // Pastikan sudah setup client
+import bcrypt from "bcryptjs"; // Untuk hashing password
 import signup_icon from "../assets/images/signup_icon.png";
 
 export default function Register() {
@@ -16,28 +17,38 @@ export default function Register() {
     e.preventDefault();
     setError(null);
 
-    // 1. Sign up user ke Supabase Auth
-    const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-    });
+    try {
+      // Hash password sebelum menyimpan
+      const hashedPassword = await bcrypt.hash(form.password, 10); // 10 adalah salt rounds
 
-    if (error) {
-      setError(error.message);
-      return;
+      // Insert data ke tabel profiles
+      // user_id akan otomatis di-generate oleh SERIAL
+      const { data, error } = await supabase
+        .from("profiles")
+        .insert([
+          {
+            name: form.name,
+            email: form.email,
+            password: hashedPassword,
+          },
+        ])
+        .select("user_id")
+        .single(); // Ambil user_id yang baru dibuat
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Simpan user_id ke localStorage (atau state manajemen lain) untuk keperluan login
+      localStorage.setItem("user_id", data.user_id);
+
+      alert("Register success! Please login.");
+      navigate("/login"); // Redirect ke halaman login
+    } catch (err) {
+      setError("An error occurred during registration.");
+      console.error(err);
     }
-
-    const user = data.user;
-
-    // 2. Simpan name ke tabel profiles (pakai id user dari auth.users)
-    if (user) {
-      await supabase.from("profiles").insert([
-        { id: user.id, name: form.name }
-      ]);
-    }
-
-    alert("Register success! Please login.");
-    navigate("/login"); // redirect ke login page
   };
 
   return (

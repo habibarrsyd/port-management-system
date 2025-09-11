@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShipWheel, CalendarCheck, Anchor } from "lucide-react";
 import { HiChartBarSquare } from 'react-icons/hi2';
+import { useNavigate } from "react-router-dom";
 import {
   ResponsiveContainer,
   BarChart,
@@ -17,6 +18,7 @@ import {
   Cell,
 } from 'recharts';
 import { supabase } from '../supabaseClient';
+import { toast } from "react-toastify";
 
 function Dropdown({ id, label, items, menuColor, icon: Icon }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -104,25 +106,33 @@ export default function Dashboard() {
   const [mostFrequentVessel, setMostFrequentVessel] = useState('');
   const [frequencyPercentage, setFrequencyPercentage] = useState(0);
   const [userName, setUserName] = useState('User');
+  const navigate = useNavigate();
   const COLORS = ['#5a0202ff', '#aeaba9ff'];
 
   // Fetch user profile and data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get authenticated user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          setError('User not authenticated');
+        // Get user_id from localStorage
+        const userId = localStorage.getItem("user_id");
+        if (!userId) {
+          toast.error("You must be logged in to access the dashboard!", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+          navigate("/login");
           return;
         }
-        const userId = user.id;
 
         // Fetch user profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('name')
-          .eq('id', userId)
+          .eq('user_id', parseInt(userId))
           .single();
 
         if (profileError) {
@@ -136,7 +146,7 @@ export default function Dashboard() {
         const { data: transactionData, error: transactionError } = await supabase
           .from('another')
           .select('*', { count: 'exact' })
-          .eq('user_id', userId);
+          .eq('user_id', parseInt(userId));
         if (transactionError) {
           console.error('Error fetching transaction count:', transactionError);
           setError('Failed to fetch transaction count. Please try again.');
@@ -149,7 +159,7 @@ export default function Dashboard() {
           .from('another')
           .select('port')
           .not('port', 'is', null)
-          .eq('user_id', userId);
+          .eq('user_id', parseInt(userId));
         if (portError) {
           console.error('Error fetching ports:', portError);
           setError('Failed to fetch ports. Please try again.');
@@ -165,7 +175,7 @@ export default function Dashboard() {
           .from('another')
           .select('kapal')
           .not('kapal', 'is', null)
-          .eq('user_id', userId);
+          .eq('user_id', parseInt(userId));
         if (vesselFrequencyError) {
           console.error('Error fetching vessel frequency:', vesselFrequencyError);
           setError('Failed to fetch vessel frequency data. Please try again.');
@@ -225,7 +235,7 @@ export default function Dashboard() {
           .not('l45fl', 'is', null)
           .not('l45mt', 'is', null)
           .not('port', 'is', null)
-          .eq('user_id', userId);
+          .eq('user_id', parseInt(userId));
         if (vesselError) {
           console.error('Error fetching vessels:', vesselError);
           setError('Failed to fetch vessels. Please try again.');
@@ -237,7 +247,7 @@ export default function Dashboard() {
           .from('another')
           .select('kapal, remark')
           .not('remark', 'is', null)
-          .eq('user_id', userId);
+          .eq('user_id', parseInt(userId));
         if (remarksError) {
           console.error('Error fetching remarks:', remarksError);
           setError('Failed to fetch remarks. Please try again.');
@@ -315,27 +325,15 @@ export default function Dashboard() {
           return 0;
         };
 
-        // DEBUG: Log raw data for occupancy calculation
-        console.log("=== OCCUPANCY DEBUG ===");
-        console.log("vesselData length:", vesselData.length);
-        console.log("Sample tcl_tb values:", vesselData.slice(0, 3).map(item => ({ kapal: item.kapal, tcl_tb: item.tcl_tb })));
-        console.log("Sample td_tcl values:", vesselData.slice(0, 3).map(item => ({ kapal: item.kapal, td_tcl: item.td_tcl })));
-
         const berthingTimes = vesselData
           .map(item => parseDurationToHours(item.tcl_tb))
-          .filter(n => !isNaN(n) && n > 0); // Filter out 0 and NaN
-        console.log("berthingTimes (filtered):", berthingTimes);
-
+          .filter(n => !isNaN(n) && n > 0);
         const timeAfterTimes = vesselData
           .map(item => parseDurationToHours(item.td_tcl))
-          .filter(n => !isNaN(n) && n > 0); // Filter out 0 and NaN
-        console.log("timeAfterTimes (filtered):", timeAfterTimes);
+          .filter(n => !isNaN(n) && n > 0);
 
         const validBerthingCount = berthingTimes.length;
         const validTimeAfterCount = timeAfterTimes.length;
-
-        console.log("validBerthingCount:", validBerthingCount);
-        console.log("validTimeAfterCount:", validTimeAfterCount);
 
         let avgBerthing = 0;
         let avgTimeAfter = 0;
@@ -352,29 +350,18 @@ export default function Dashboard() {
 
         // Calculate occupancy based on valid data
         if (validBerthingCount > 0 && validTimeAfterCount > 0) {
-          // Use the minimum count to ensure fair comparison
           const minCount = Math.min(validBerthingCount, validTimeAfterCount);
           const totalBerthingTime = avgBerthing * minCount;
           const totalTimeAfterTime = avgTimeAfter * minCount;
           const totalTime = totalBerthingTime + totalTimeAfterTime;
           const newOccupancy = totalTime > 0 ? (totalBerthingTime / totalTime) * 100 : 0;
           setOccupancy(newOccupancy);
-          console.log("Occupancy calculated:", newOccupancy.toFixed(2), "%");
-          console.log("totalBerthingTime:", totalBerthingTime.toFixed(2));
-          console.log("totalTimeAfterTime:", totalTimeAfterTime.toFixed(2));
-          console.log("totalTime:", totalTime.toFixed(2));
         } else if (validBerthingCount > 0) {
-          // Only berthing data available
           setOccupancy(100);
-          console.log("Only berthing data available - occupancy set to 100%");
         } else if (validTimeAfterCount > 0) {
-          // Only time after data available
           setOccupancy(0);
-          console.log("Only time after data available - occupancy set to 0%");
         } else {
-          // No valid data
           setOccupancy(0);
-          console.log("No valid data for occupancy calculation");
         }
 
         // Process bar data (Port Stay) - Fixed to use td_ta
@@ -383,7 +370,7 @@ export default function Dashboard() {
             kapal: item.kapal,
             td_ta: parseDurationToHours(item.td_ta),
           }))
-          .filter(item => !isNaN(item.td_ta) && item.td_ta > 0); // Filter out 0 and NaN
+          .filter(item => !isNaN(item.td_ta) && item.td_ta > 0);
         const groupedTdTaData = tdTaData.reduce((acc, curr) => {
           const { kapal, td_ta } = curr;
           if (!acc[kapal]) acc[kapal] = { sum: 0, count: 0 };
@@ -403,7 +390,7 @@ export default function Dashboard() {
             kapal: item.kapal,
             prod_td_ta: parseFloat(item.prod_td_ta),
           }))
-          .filter(item => !isNaN(item.prod_td_ta) && item.prod_td_ta > 0); // Filter out 0 and NaN
+          .filter(item => !isNaN(item.prod_td_ta) && item.prod_td_ta > 0);
         const groupedProdData = prodData.reduce((acc, curr) => {
           const { kapal, prod_td_ta } = curr;
           if (!acc[kapal]) acc[kapal] = { sum: 0, count: 0 };
@@ -417,10 +404,10 @@ export default function Dashboard() {
         }));
         setProductivityData(averageProdData);
 
-        // Calculate waiting time (tb_ta) - Fixed filter
+        // Calculate waiting time (tb_ta)
         const waitingTimes = vesselData
           .map(item => parseDurationToHours(item.tb_ta))
-          .filter(n => !isNaN(n) && n > 0); // Filter out 0 and NaN
+          .filter(n => !isNaN(n) && n > 0);
         setAverageWaitingTime(waitingTimes.length > 0 ? waitingTimes.reduce((a, b) => a + b, 0) / waitingTimes.length : 0);
 
         // Most frequent vessel
@@ -436,7 +423,7 @@ export default function Dashboard() {
           .from('another')
           .select('period')
           .not('period', 'is', null)
-          .eq('user_id', userId);
+          .eq('user_id', parseInt(userId));
         if (periodError) {
           console.error('Error fetching periods:', periodError);
           setError('Failed to fetch time periods. Please try again.');
@@ -453,7 +440,7 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="p-10 mt-10 w-screen">
@@ -466,11 +453,11 @@ export default function Dashboard() {
 
       <div className="mb-6 text-gray-600">
         <p>
-        Welcome <strong className="uppercase"><b>{userName}</b></strong>! Here you can monitor key metrics and performance indicators related to port activities.
+          Welcome <strong className="uppercase"><b>{userName}</b></strong>! Here you can monitor key metrics and performance indicators related to port activities.
         </p>
       </div>
 
-      {/* Filters - Uncomment if needed */}
+      {/* Filters */}
       {/* <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="text-gray-600">
           <Dropdown
@@ -543,18 +530,14 @@ export default function Dashboard() {
           <h2 className="font-bold mb-4">Port Stay</h2>
           <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={barData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="kapal" interval="preserveStartEnd" />
-              <YAxis
-                tickFormatter={(value) => value.toFixed(2)}
-              />
-              <Tooltip
-                formatter={(value) => Number(value).toFixed(2)}
-              />
-              <Bar dataKey="value" fill="#820606ff" />
-            </BarChart>
-          </ResponsiveContainer>
+              <BarChart data={barData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="kapal" interval="preserveStartEnd" />
+                <YAxis tickFormatter={(value) => value.toFixed(2)} />
+                <Tooltip formatter={(value) => Number(value).toFixed(2)} />
+                <Bar dataKey="value" fill="#820606ff" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -583,31 +566,14 @@ export default function Dashboard() {
           <h2 className="font-bold mb-4">Productivity</h2>
           <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
-      <LineChart
-        data={productivityData}
-        margin={{ top: 5, right: 20, left: 10, bottom: 20 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis
-          dataKey="kapal"
-          interval="preserveStartEnd"
-          label={{ value: "Vessel Type", position: "bottom", offset: 4 }}
-        />
-        <YAxis
-          label={{ value: "Value", angle: -90, position: "left", offset: 0 }}
-          tickFormatter={(value) => value.toFixed(2)}
-        />
-        <Tooltip
-          formatter={(value) => Number(value).toFixed(2)}
-        />
-        <Line
-          type="monotone"
-          dataKey="value"
-          stroke="#500606ff"
-          strokeWidth={2}
-        />
-      </LineChart>
-    </ResponsiveContainer>
+              <LineChart data={productivityData} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="kapal" interval="preserveStartEnd" label={{ value: "Vessel Type", position: "bottom", offset: 4 }} />
+                <YAxis label={{ value: "Value", angle: -90, position: "left", offset: 0 }} tickFormatter={(value) => value.toFixed(2)} />
+                <Tooltip formatter={(value) => Number(value).toFixed(2)} />
+                <Line type="monotone" dataKey="value" stroke="#500606ff" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -643,12 +609,7 @@ export default function Dashboard() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Legend
-                    verticalAlign="bottom"
-                    align="center"
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: '12px' }}
-                  />
+                  <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

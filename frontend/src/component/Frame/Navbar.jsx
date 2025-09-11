@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import Icon from "@mdi/react";
 import { MdMail } from "react-icons/md";
 import { mdiMenu, mdiClose, mdiServerNetwork } from "@mdi/js";
-import { MdSupervisedUserCircle } from 'react-icons/md';
+import { MdSupervisedUserCircle } from "react-icons/md";
 
 const Dropdown = ({ id, buttonContent, menuContent }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,58 +55,33 @@ export default function Navbar() {
   const [profileName, setProfileName] = useState("");
   const navigate = useNavigate();
 
-  // Ambil user + data profile saat komponen mount
+  // Ambil user_id dari localStorage dan data profile saat komponen mount
   useEffect(() => {
-    const fetchUserAndProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+    const fetchUserProfile = async () => {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) {
+        setUser(null);
+        setProfileName("");
+        return;
+      }
 
-      if (user) {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("name")
-          .eq("id", user.id)
-          .single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, name, email")
+        .eq("user_id", parseInt(userId))
+        .single();
 
-        if (error) {
-          console.error("Error fetching profile:", error.message);
-        } else {
-          setProfileName(data?.name || "");
-        }
+      if (error) {
+        console.error("Error fetching profile:", error.message);
+        setUser(null);
+        setProfileName("");
+      } else {
+        setUser(data);
+        setProfileName(data?.name || "");
       }
     };
 
-    fetchUserAndProfile();
-
-    // Subscribe ke perubahan auth state
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session); // Debug auth state
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          supabase
-            .from("profiles")
-            .select("name")
-            .eq("id", session.user.id)
-            .single()
-            .then(({ data, error }) => {
-              if (error) {
-                console.error("Error fetching profile on auth change:", error.message);
-              } else {
-                setProfileName(data?.name || "");
-              }
-            });
-        } else {
-          setProfileName("");
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    fetchUserProfile();
   }, []);
 
   const link = [
@@ -115,21 +90,10 @@ export default function Navbar() {
     { name: "Transactions", path: "/transactions" },
   ];
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast.error("Logout failed: " + error.message, {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        console.error("Logout error:", error.message);
-        return;
-      }
+      // Hapus user_id dari localStorage
+      localStorage.removeItem("user_id");
 
       toast.success("Successfully logged out!", {
         position: "top-right",
@@ -140,7 +104,7 @@ export default function Navbar() {
         draggable: true,
       });
 
-      // Wait for session to clear and toast to show
+      // Wait for toast to show
       setTimeout(() => {
         navigate("/login");
       }, 2500);
@@ -169,52 +133,56 @@ export default function Navbar() {
           Port Monitoring System
         </div>
         <div className="navbar-desktop md:flex items-center gap-2 text-lg">
-          <ul className="flex items-center gap-4">
-            {link.map((item) => (
-              <li key={item.path} className="hover:text-blue-500">
-                <Link to={item.path}>{item.name}</Link>
-              </li>
-            ))}
-          </ul>
-          <div className="ml-3">
-            <Dropdown
-              id="avatar-dropdown"
-              buttonContent={
-                <div className="avatar placeholder">
-                  <div className="bg-neutral text-neutral-content w-8 rounded-full ring-3 ring-gray-800 flex items-center justify-center">
-                    <span className="text-md font-extrabold">
-                      {profileName
-                        ? profileName[0].toUpperCase()
-                        : user?.email
-                        ? user.email[0].toUpperCase()
-                        : "U"}
-                    </span>
-                  </div>
-                </div>
-              }
-              menuContent={
-                <>
-                  <li className="bg-white px-3 py-2 text-[#353333] font-medium rounded-md flex items-center">
-                    <MdSupervisedUserCircle className="inline mr-1 text-red-800 w-4 h-4 flex-shrink-0" />
-                    <span>{profileName || "User"}</span>
+          {user ? (
+            <>
+              <ul className="flex items-center gap-4">
+                {link.map((item) => (
+                  <li key={item.path} className="hover:text-blue-500">
+                    <Link to={item.path}>{item.name}</Link>
                   </li>
-                  <li className="bg-white px-3 py-2 text-xs text-gray-600 rounded-md flex items-center">
-                    <MdMail className="inline mr-1 text-red-800 w-4 h-4 flex-shrink-0" />
-                    <span>{user?.email}</span>
-                  </li>
-                  <li>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center px-3 py-2 gap-1 text-red-800 hover:bg-red-100 w-full text-left"
-                    >
-                      <Icon path={mdiServerNetwork} size={0.6} className="text-red-800" />
-                      Logout
-                    </button>
-                  </li>
-                </>
-              }
-            />
-          </div>
+                ))}
+              </ul>
+              <div className="ml-3">
+                <Dropdown
+                  id="avatar-dropdown"
+                  buttonContent={
+                    <div className="avatar placeholder">
+                      <div className="bg-neutral text-neutral-content w-8 rounded-full ring-3 ring-gray-800 flex items-center justify-center">
+                        <span className="text-md font-extrabold">
+                          {profileName ? profileName[0].toUpperCase() : "U"}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                  menuContent={
+                    <>
+                      <li className="bg-white px-3 py-2 text-[#353333] font-medium rounded-md flex items-center">
+                        <MdSupervisedUserCircle className="inline mr-1 text-red-800 w-4 h-4 flex-shrink-0" />
+                        <span>{profileName || "User"}</span>
+                      </li>
+                      <li className="bg-white px-3 py-2 text-xs text-gray-600 rounded-md flex items-center">
+                        <MdMail className="inline mr-1 text-red-800 w-4 h-4 flex-shrink-0" />
+                        <span>{user?.email || "No email"}</span>
+                      </li>
+                      <li>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center px-3 py-2 gap-1 text-red-800 hover:bg-red-100 w-full text-left"
+                        >
+                          <Icon path={mdiServerNetwork} size={0.6} className="text-red-800" />
+                          Logout
+                        </button>
+                      </li>
+                    </>
+                  }
+                />
+              </div>
+            </>
+          ) : (
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Login
+            </Link>
+          )}
         </div>
         <div
           onClick={() => setOpen(!open)}
@@ -225,34 +193,44 @@ export default function Navbar() {
       </div>
       {open && (
         <ul className="md:hidden absolute bg-white w-full left-0 top-10 flex flex-col items-start gap-3 py-4 px-8 text-lg shadow-md transition-all duration-500 ease-in-out">
-          {link.map((item) => (
-            <li
-              key={item.path}
-              className="w-full hover:text-blue-500"
-              onClick={() => setOpen(false)}
-            >
-              <Link to={item.path}>{item.name}</Link>
+          {user ? (
+            <>
+              {link.map((item) => (
+                <li
+                  key={item.path}
+                  className="w-full hover:text-blue-500"
+                  onClick={() => setOpen(false)}
+                >
+                  <Link to={item.path}>{item.name}</Link>
+                </li>
+              ))}
+              <li className="w-full px-3 py-1 text-[#353333] font-medium">
+                {profileName || "User"}
+              </li>
+              <li className="w-full text-red-500 hover:text-blue-500">
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1 font-medium hover:bg-gray-100 w-full text-left"
+                >
+                  <Icon
+                    path={mdiServerNetwork}
+                    size={0.8}
+                    className="text-red-500"
+                  />
+                  Logout
+                </button>
+              </li>
+            </>
+          ) : (
+            <li className="w-full hover:text-blue-500">
+              <Link to="/login" onClick={() => setOpen(false)}>
+                Login
+              </Link>
             </li>
-          ))}
-          <li className="w-full px-3 py-1 text-[#353333] font-medium">
-            {profileName || user?.email || "User"}
-          </li>
-          <li className="w-full text-red-500 hover:text-blue-500">
-            <button
-              onClick={() => {
-                handleLogout();
-                setOpen(false);
-              }}
-              className="flex items-center gap-2 px-3 py-1 font-medium hover:bg-gray-100 w-full text-left"
-            >
-              <Icon
-                path={mdiServerNetwork}
-                size={0.8}
-                className="text-red-500"
-              />
-              Logout
-            </button>
-          </li>
+          )}
         </ul>
       )}
     </div>

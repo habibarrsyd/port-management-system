@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { ShoppingCart } from "lucide-react";
 import { MdArrowCircleRight } from 'react-icons/md';
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export default function TransactionsTable() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTransactions();
@@ -16,21 +19,37 @@ export default function TransactionsTable() {
   async function fetchTransactions() {
     setLoading(true);
 
-    // 🔑 Ambil user_id dari session
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("User not authenticated");
+    // Ambil user_id dari localStorage
+    const userId = localStorage.getItem("user_id");
+    if (!userId) {
+      toast.error("You must be logged in to access transactions!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      navigate("/login");
       setLoading(false);
       return;
     }
 
     const { data, error } = await supabase
       .from("another")
-      .select("id, kapal, voy_arr, voy_dep, asal, tujuan, td_ta, ta_taob, port, remark, period, port_route, user_id")
-      .eq('user_id', user.id);
+      .select("id, kapal, voy_arr, voy_dep, asal, tujuan, td_ta, ta_taob, port, remark, period, port_route")
+      .eq('user_id', parseInt(userId));
 
     if (error) {
       console.error("Error fetching transactions:", error);
+      toast.error("Failed to fetch transactions: " + error.message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } else {
       setTransactions(data);
     }
