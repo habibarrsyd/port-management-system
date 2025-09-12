@@ -3,11 +3,13 @@ import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { XCircleIcon } from "lucide-react";
-import { supabase } from "../supabaseClient";
+// import { supabase } from "../supabaseClient";
 
 export default function FileUpload() {
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
+
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -61,7 +63,7 @@ export default function FileUpload() {
   formData.append("user_id", userId);
 
   try {
-    const response = await fetch("http://127.0.0.1:5000/upload", {
+    const response = await fetch(`${API_URL}/upload`, {
       method: "POST",
       body: formData,
       // JANGAN set Content-Type — biar browser otomatis handle multipart/form-data
@@ -99,10 +101,10 @@ export default function FileUpload() {
   }
 };
 
-  return (
-    <div className="complete-upload">
-      <div className="flex flex-col items-center text-center mt-[60px] w-[500px]">
-        <h4 className="font-bold text-[60px] mt-[40px] text-gray-900">Upload Excel File</h4>
+      return (
+      <div className="complete-upload h-screen flex justify-center items-center overflow-hidden">
+        <div className="flex flex-col items-center text-center w-[500px]">
+        <h4 className="font-bold text-[60px] mt-[-200px] text-gray-900">Upload Excel File</h4>
 
         {!file ? (
           <label className="cursor-pointer bg-[#c51717] px-[70px] py-[10px] rounded-[15px] text-[40px] text-white hover:bg-[#ED5555] mt-[10px]">

@@ -8,6 +8,7 @@ import signinIcon2 from "../assets/images/signin_icon2.png";
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -18,7 +19,7 @@ export default function Login() {
 
     try {
       // Kirim request ke endpoint /api/login
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch(`${API_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,7 +41,7 @@ export default function Login() {
 
       toast.success("Login successful!", {
         position: "top-right",
-        autoClose: 2000,
+        autoClose: 1000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
@@ -52,7 +53,7 @@ export default function Login() {
       // Delay navigasi agar toast sempat muncul
       setTimeout(() => {
         navigate("/upload");
-      }, 1500);
+      }, 1000);
     } catch (err) {
       toast.error(err.message || "An error occurred during login.", {
         position: "top-right",

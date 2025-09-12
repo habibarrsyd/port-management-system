@@ -107,6 +107,7 @@ export default function Dashboard() {
   const [userName, setUserName] = useState('User');
   const navigate = useNavigate();
   const COLORS = ['#5a0202ff', '#aeaba9ff'];
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,7 +128,7 @@ export default function Dashboard() {
         }
 
         // Fetch data from Flask /dashboard endpoint
-        const response = await fetch(`http://localhost:5000/dashboard?user_id=${userId}`, {
+        const response = await fetch(`${API_URL}/dashboard?user_id=${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

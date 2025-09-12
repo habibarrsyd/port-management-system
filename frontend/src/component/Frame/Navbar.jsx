@@ -65,14 +65,15 @@ export default function Navbar() {
       }
 
       try {
-        const response = await fetch(`http://localhost:5000/api/profile?user_id=${userId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // Add authentication header if needed (e.g., JWT)
-            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/profile?user_id=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -94,20 +95,12 @@ export default function Navbar() {
         console.error("Error fetching profile:", error.message);
         setUser(null);
         setProfileName("");
-        toast.error("Failed to fetch profile data.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
+        toast.error("Failed to fetch profile data.");
       }
     };
 
     fetchUserProfile();
   }, []);
-
   const link = [
     { name: "Upload", path: "/upload" },
     { name: "Dashboard", path: "/dashboard" },
@@ -119,11 +112,10 @@ export default function Navbar() {
     const userId = localStorage.getItem("user_id");
     if (userId) {
       // Call the logout endpoint
-      const response = await fetch("http://localhost:5000/api/logout", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Add if JWT is implemented: 'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({ user_id: userId }),
       });
@@ -145,7 +137,7 @@ export default function Navbar() {
 
     toast.success("Successfully logged out!", {
       position: "top-right",
-      autoClose: 2000,
+      autoClose: 1000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
@@ -155,7 +147,7 @@ export default function Navbar() {
     // Wait for toast to show
     setTimeout(() => {
       navigate("/login");
-    }, 2500);
+    }, 1000);
   } catch (err) {
     toast.error("Unexpected error during logout: " + err.message, {
       position: "top-right",
