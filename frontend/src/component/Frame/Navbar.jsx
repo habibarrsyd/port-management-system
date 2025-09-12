@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../../supabaseClient";
 import { toast } from "react-toastify";
 import Icon from "@mdi/react";
 import { MdMail } from "react-icons/md";
@@ -55,7 +54,7 @@ export default function Navbar() {
   const [profileName, setProfileName] = useState("");
   const navigate = useNavigate();
 
-  // Ambil user_id dari localStorage dan data profile saat komponen mount
+  // Fetch user profile from Flask backend
   useEffect(() => {
     const fetchUserProfile = async () => {
       const userId = localStorage.getItem("user_id");
@@ -65,19 +64,44 @@ export default function Navbar() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, name, email")
-        .eq("user_id", parseInt(userId))
-        .single();
+      try {
+        const response = await fetch(`http://localhost:5000/api/profile?user_id=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Add authentication header if needed (e.g., JWT)
+            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        });
 
-      if (error) {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        setUser({
+          user_id: data.user_id,
+          name: data.name,
+          email: data.email,
+        });
+        setProfileName(data.name || "");
+      } catch (error) {
         console.error("Error fetching profile:", error.message);
         setUser(null);
         setProfileName("");
-      } else {
-        setUser(data);
-        setProfileName(data?.name || "");
+        toast.error("Failed to fetch profile data.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
     };
 
@@ -90,36 +114,60 @@ export default function Navbar() {
     { name: "Transactions", path: "/transactions" },
   ];
 
-  const handleLogout = () => {
-    try {
-      // Hapus user_id dari localStorage
-      localStorage.removeItem("user_id");
-
-      toast.success("Successfully logged out!", {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
+  const handleLogout = async () => {
+  try {
+    const userId = localStorage.getItem("user_id");
+    if (userId) {
+      // Call the logout endpoint
+      const response = await fetch("http://localhost:5000/api/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Add if JWT is implemented: 'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ user_id: userId }),
       });
 
-      // Wait for toast to show
-      setTimeout(() => {
-        navigate("/login");
-      }, 2500);
-    } catch (err) {
-      toast.error("Unexpected error during logout: " + err.message, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      console.error("Unexpected logout error:", err.message);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
     }
-  };
+
+    // Remove user_id from localStorage
+    localStorage.removeItem("user_id");
+    // Remove token if JWT is implemented
+    // localStorage.removeItem("token");
+
+    toast.success("Successfully logged out!", {
+      position: "top-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+
+    // Wait for toast to show
+    setTimeout(() => {
+      navigate("/login");
+    }, 2500);
+  } catch (err) {
+    toast.error("Unexpected error during logout: " + err.message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+    console.error("Unexpected logout error:", err.message);
+  }
+};
 
   return (
     <div className="shadow-md w-full fixed bg-white top-0 left-0 z-10">

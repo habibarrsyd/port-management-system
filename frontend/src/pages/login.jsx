@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import bcrypt from "bcryptjs"; // Untuk memverifikasi password
 import signinIcon from "../assets/images/signin_icon.png";
 import signinIcon2 from "../assets/images/signin_icon2.png";
 
@@ -19,42 +17,26 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      // Cari pengguna berdasarkan email di tabel profiles
-      const { data: user, error } = await supabase
-        .from("profiles")
-        .select("user_id, password")
-        .eq("email", form.email)
-        .single();
+      // Kirim request ke endpoint /api/login
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
-      if (error || !user) {
-        toast.error("Login failed. Email not found.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
       }
 
-      // Verifikasi password
-      const isPasswordValid = await bcrypt.compare(form.password, user.password);
-
-      if (!isPasswordValid) {
-        toast.error("Login failed. Incorrect password.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        return;
-      }
-
-      // Simpan user_id ke localStorage untuk keperluan filtering data
-      localStorage.setItem("user_id", user.user_id);
+      // Simpan user_id ke localStorage
+      localStorage.setItem("user_id", data.user_id);
 
       toast.success("Login successful!", {
         position: "top-right",
@@ -65,14 +47,14 @@ export default function Login() {
         draggable: true,
       });
 
-      console.log("User logged in:", { user_id: user.user_id });
+      console.log("User logged in:", { user_id: data.user_id });
 
       // Delay navigasi agar toast sempat muncul
       setTimeout(() => {
         navigate("/upload");
-      }, 1500); // 2.5 detik
+      }, 1500);
     } catch (err) {
-      toast.error("An error occurred during login.", {
+      toast.error(err.message || "An error occurred during login.", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,

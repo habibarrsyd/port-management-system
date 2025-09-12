@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient"; // Pastikan sudah setup client
-import bcrypt from "bcryptjs"; // Untuk hashing password
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import signup_icon from "../assets/images/signup_icon.png";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -15,39 +14,67 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
 
     try {
-      // Hash password sebelum menyimpan
-      const hashedPassword = await bcrypt.hash(form.password, 10); // 10 adalah salt rounds
+      console.log("Sending request to /api/register with body:", JSON.stringify({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      }));
 
-      // Insert data ke tabel profiles
-      // user_id akan otomatis di-generate oleh SERIAL
-      const { data, error } = await supabase
-        .from("profiles")
-        .insert([
-          {
-            name: form.name,
-            email: form.email,
-            password: hashedPassword,
-          },
-        ])
-        .select("user_id")
-        .single(); // Ambil user_id yang baru dibuat
+      const response = await fetch("http://localhost:5000/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
-      if (error) {
-        setError(error.message);
-        return;
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers.get("content-type"));
+
+      // Cek apakah respons adalah JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Server returned non-JSON response");
       }
 
-      // Simpan user_id ke localStorage (atau state manajemen lain) untuk keperluan login
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
       localStorage.setItem("user_id", data.user_id);
 
-      alert("Register success! Please login.");
-      navigate("/login"); // Redirect ke halaman login
+      toast.success("Register success! Redirecting to login...", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (err) {
-      setError("An error occurred during registration.");
-      console.error(err);
+      console.error("Error details:", err);
+      toast.error(err.message || "An error occurred during registration.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
@@ -62,8 +89,6 @@ export default function Register() {
         </div>
         <h2 className="text-2xl font-bold text-center">Register</h2>
         <p className="text-center">Please input your data to register</p>
-
-        {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <input
           type="text"
@@ -109,6 +134,7 @@ export default function Register() {
           </Link>
         </p>
       </form>
+      <ToastContainer />
     </div>
   );
 }

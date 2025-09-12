@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShipWheel, CalendarCheck, Anchor } from "lucide-react";
+import { ShipWheel, CalendarCheck } from "lucide-react";
 import { HiChartBarSquare } from 'react-icons/hi2';
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,7 +17,6 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { supabase } from '../supabaseClient';
 import { toast } from "react-toastify";
 
 function Dropdown({ id, label, items, menuColor, icon: Icon }) {
@@ -109,7 +108,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const COLORS = ['#5a0202ff', '#aeaba9ff'];
 
-  // Fetch user profile and data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -128,314 +126,55 @@ export default function Dashboard() {
           return;
         }
 
-        // Fetch user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('user_id', parseInt(userId))
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          setError('Failed to fetch user profile. Please try again.');
-          return;
-        }
-        setUserName(profileData?.name || 'User');
-
-        // Fetch transaction count
-        const { data: transactionData, error: transactionError } = await supabase
-          .from('another')
-          .select('*', { count: 'exact' })
-          .eq('user_id', parseInt(userId));
-        if (transactionError) {
-          console.error('Error fetching transaction count:', transactionError);
-          setError('Failed to fetch transaction count. Please try again.');
-          return;
-        }
-        setTransactionCount(transactionData.length);
-
-        // Fetch unique ports
-        const { data: portData, error: portError } = await supabase
-          .from('another')
-          .select('port')
-          .not('port', 'is', null)
-          .eq('user_id', parseInt(userId));
-        if (portError) {
-          console.error('Error fetching ports:', portError);
-          setError('Failed to fetch ports. Please try again.');
-          return;
-        }
-        const uniquePorts = [...new Set(portData.map(item => item.port))]
-          .filter(port => port)
-          .map(port => ({ label: port, href: '#', disabled: false }));
-        setPortItems(uniquePorts);
-
-        // Fetch vessel frequency
-        const { data: vesselFrequencyData, error: vesselFrequencyError } = await supabase
-          .from('another')
-          .select('kapal')
-          .not('kapal', 'is', null)
-          .eq('user_id', parseInt(userId));
-        if (vesselFrequencyError) {
-          console.error('Error fetching vessel frequency:', vesselFrequencyError);
-          setError('Failed to fetch vessel frequency data. Please try again.');
-          return;
-        }
-        const vesselCounts = vesselFrequencyData.reduce((acc, item) => {
-          const kapal = item.kapal;
-          if (kapal) acc[kapal] = (acc[kapal] || 0) + 1;
-          return acc;
-        }, {});
-        const sortedVessels = Object.entries(vesselCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([kapal]) => ({ label: kapal, href: '#', disabled: true }));
-        setVesselVoyageItems(sortedVessels);
-
-        // Fetch vessel data
-        const { data: vesselData, error: vesselError } = await supabase
-          .from('another')
-          .select(`
-            kapal, td, tb, prod_td_ta, td_ta, tcl_tb, td_tcl, tb_ta, 
-            d20fl, d20mt, d40fl, d40mt, d10fl, d10mt, d21fl, d21mt, 
-            d40frfl, d40frmt, d45fl, d45mt, l20fl, l20mt, l40fl, l40mt, 
-            l10fl, l10mt, l21fl, l21mt, l40frfl, l40frmt, l45fl, l45mt, 
-            port
-          `)
-          .not('kapal', 'is', null)
-          .not('td', 'is', null)
-          .not('tb', 'is', null)
-          .not('prod_td_ta', 'is', null)
-          .not('td_ta', 'is', null)
-          .not('tcl_tb', 'is', null)
-          .not('td_tcl', 'is', null)
-          .not('tb_ta', 'is', null)
-          .not('d20fl', 'is', null)
-          .not('d20mt', 'is', null)
-          .not('d40fl', 'is', null)
-          .not('d40mt', 'is', null)
-          .not('d10fl', 'is', null)
-          .not('d10mt', 'is', null)
-          .not('d21fl', 'is', null)
-          .not('d21mt', 'is', null)
-          .not('d40frfl', 'is', null)
-          .not('d40frmt', 'is', null)
-          .not('d45fl', 'is', null)
-          .not('d45mt', 'is', null)
-          .not('l20fl', 'is', null)
-          .not('l20mt', 'is', null)
-          .not('l40fl', 'is', null)
-          .not('l40mt', 'is', null)
-          .not('l10fl', 'is', null)
-          .not('l10mt', 'is', null)
-          .not('l21fl', 'is', null)
-          .not('l21mt', 'is', null)
-          .not('l40frfl', 'is', null)
-          .not('l40frmt', 'is', null)
-          .not('l45fl', 'is', null)
-          .not('l45mt', 'is', null)
-          .not('port', 'is', null)
-          .eq('user_id', parseInt(userId));
-        if (vesselError) {
-          console.error('Error fetching vessels:', vesselError);
-          setError('Failed to fetch vessels. Please try again.');
-          return;
-        }
-
-        // Fetch remarks
-        const { data: remarksRaw, error: remarksError } = await supabase
-          .from('another')
-          .select('kapal, remark')
-          .not('remark', 'is', null)
-          .eq('user_id', parseInt(userId));
-        if (remarksError) {
-          console.error('Error fetching remarks:', remarksError);
-          setError('Failed to fetch remarks. Please try again.');
-          return;
-        }
-        setRemarksData(remarksRaw);
-
-        // Process container data
-        const dropColumns = [
-          'd20fl', 'd20mt', 'd40fl', 'd40mt', 'd10fl', 'd10mt',
-          'd21fl', 'd21mt', 'd40frfl', 'd40frmt', 'd45fl', 'd45mt'
-        ];
-        const loadColumns = [
-          'l20fl', 'l20mt', 'l40fl', 'l40mt', 'l10fl', 'l10mt',
-          'l21fl', 'l21mt', 'l40frfl', 'l40frmt', 'l45fl', 'l45mt'
-        ];
-
-        const portContainerData = uniquePorts.reduce((acc, portItem) => {
-          const port = portItem.label;
-          const portData = vesselData.filter(item => item.port === port);
-          let dropCount = 0;
-          let loadCount = 0;
-          portData.forEach(item => {
-            dropColumns.forEach(col => dropCount += parseFloat(item[col]) || 0);
-            loadColumns.forEach(col => loadCount += parseFloat(item[col]) || 0);
-          });
-          return [...acc, { port, drop: dropCount, load: loadCount }];
-        }, []);
-        setStackedBarData(portContainerData);
-
-        // Process pie data
-        let totalFull = 0;
-        let totalEmpty = 0;
-        const flColumns = [
-          'd20fl', 'd40fl', 'd10fl', 'd21fl', 'd40frfl', 'd45fl',
-          'l20fl', 'l40fl', 'l10fl', 'l21fl', 'l40frfl', 'l45fl'
-        ];
-        const mtColumns = [
-          'd20mt', 'd40mt', 'd10mt', 'd21mt', 'd40frmt', 'd45mt',
-          'l20mt', 'l40mt', 'l10mt', 'l21mt', 'l40frmt', 'l45mt'
-        ];
-        vesselData.forEach(item => {
-          flColumns.forEach(col => totalFull += parseFloat(item[col]) || 0);
-          mtColumns.forEach(col => totalEmpty += parseFloat(item[col]) || 0);
+        // Fetch data from Flask /dashboard endpoint
+        const response = await fetch(`http://localhost:5000/dashboard?user_id=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Add authentication header if needed (e.g., JWT)
+            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
         });
-        setPieData([{ name: 'Full', value: totalFull }, { name: 'Empty', value: totalEmpty }]);
 
-        // Process bar data (Port Stay)
-        const parseDurationToHours = (str) => {
-          if (!str || typeof str !== 'string') return 0;
-
-          // Handle "0", "0:00", "0:00:00"
-          if (str === "0" || str === "0:00" || str === "0:00:00") {
-            return 0;
-          }
-
-          // Handle "HH:MM" or "HH:MM:SS"
-          if (str.includes(':')) {
-            const parts = str.split(':').map(part => parseFloat(part.trim()));
-            if (parts.length >= 2 && !parts.some(isNaN)) {
-              const hours = parts[0] || 0;
-              const minutes = parts[1] || 0;
-              const seconds = parts[2] || 0;
-              return hours + minutes / 60 + seconds / 3600;
-            }
-          }
-
-          // Handle "2.5" or "2,5"
-          const num = parseFloat(str.replace(',', '.'));
-          if (!isNaN(num)) {
-            return num;
-          }
-
-          console.warn("⚠️ Cannot parse duration:", str);
-          return 0;
-        };
-
-        const berthingTimes = vesselData
-          .map(item => parseDurationToHours(item.tcl_tb))
-          .filter(n => !isNaN(n) && n > 0);
-        const timeAfterTimes = vesselData
-          .map(item => parseDurationToHours(item.td_tcl))
-          .filter(n => !isNaN(n) && n > 0);
-
-        const validBerthingCount = berthingTimes.length;
-        const validTimeAfterCount = timeAfterTimes.length;
-
-        let avgBerthing = 0;
-        let avgTimeAfter = 0;
-
-        if (validBerthingCount > 0) {
-          avgBerthing = berthingTimes.reduce((a, b) => a + b, 0) / validBerthingCount;
-        }
-        if (validTimeAfterCount > 0) {
-          avgTimeAfter = timeAfterTimes.reduce((a, b) => a + b, 0) / validTimeAfterCount;
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        setAverageBerthingDuration(avgBerthing);
-        setAverageTimeAfterCompletion(avgTimeAfter);
+        const data = await response.json();
 
-        // Calculate occupancy based on valid data
-        if (validBerthingCount > 0 && validTimeAfterCount > 0) {
-          const minCount = Math.min(validBerthingCount, validTimeAfterCount);
-          const totalBerthingTime = avgBerthing * minCount;
-          const totalTimeAfterTime = avgTimeAfter * minCount;
-          const totalTime = totalBerthingTime + totalTimeAfterTime;
-          const newOccupancy = totalTime > 0 ? (totalBerthingTime / totalTime) * 100 : 0;
-          setOccupancy(newOccupancy);
-        } else if (validBerthingCount > 0) {
-          setOccupancy(100);
-        } else if (validTimeAfterCount > 0) {
-          setOccupancy(0);
-        } else {
-          setOccupancy(0);
+        if (data.error) {
+          throw new Error(data.error);
         }
 
-        // Process bar data (Port Stay) - Fixed to use td_ta
-        const tdTaData = vesselData
-          .map(item => ({
-            kapal: item.kapal,
-            td_ta: parseDurationToHours(item.td_ta),
-          }))
-          .filter(item => !isNaN(item.td_ta) && item.td_ta > 0);
-        const groupedTdTaData = tdTaData.reduce((acc, curr) => {
-          const { kapal, td_ta } = curr;
-          if (!acc[kapal]) acc[kapal] = { sum: 0, count: 0 };
-          acc[kapal].sum += td_ta;
-          acc[kapal].count += 1;
-          return acc;
-        }, {});
-        const averageTdTaData = Object.keys(groupedTdTaData).map(kapal => ({
-          kapal,
-          value: groupedTdTaData[kapal].sum / groupedTdTaData[kapal].count,
-        }));
-        setBarData(averageTdTaData);
+        // Map response directly to state variables
+        setUserName(data.user_name || 'User');
+        setTransactionCount(data.transaction_count || 0);
+        setPortItems(data.port_items || []);
+        setVesselVoyageItems(data.vessel_voyage_items || []);
+        setTimePeriodItems(data.time_period_items || []);
+        setBarData(data.bar_data || []);
+        setProductivityData(data.productivity_data || []);
+        setAverageBerthingDuration(data.average_berthing_duration || 0);
+        setAverageTimeAfterCompletion(data.average_time_after_completion || 0);
+        setAverageWaitingTime(data.average_waiting_time || 0);
+        setOccupancy(data.occupancy || 0);
+        setStackedBarData(data.stacked_bar_data || []);
+        setPieData(data.pie_data || []);
+        setRemarksData(data.remarks_data || []);
+        setMostFrequentVessel(data.most_frequent_vessel || 'N/A');
+        setFrequencyPercentage(data.frequency_percentage || 0);
 
-        // Process productivity data
-        const prodData = vesselData
-          .map(item => ({
-            kapal: item.kapal,
-            prod_td_ta: parseFloat(item.prod_td_ta),
-          }))
-          .filter(item => !isNaN(item.prod_td_ta) && item.prod_td_ta > 0);
-        const groupedProdData = prodData.reduce((acc, curr) => {
-          const { kapal, prod_td_ta } = curr;
-          if (!acc[kapal]) acc[kapal] = { sum: 0, count: 0 };
-          acc[kapal].sum += prod_td_ta;
-          acc[kapal].count += 1;
-          return acc;
-        }, {});
-        const averageProdData = Object.keys(groupedProdData).map(kapal => ({
-          kapal,
-          value: groupedProdData[kapal].sum / groupedProdData[kapal].count,
-        }));
-        setProductivityData(averageProdData);
-
-        // Calculate waiting time (tb_ta)
-        const waitingTimes = vesselData
-          .map(item => parseDurationToHours(item.tb_ta))
-          .filter(n => !isNaN(n) && n > 0);
-        setAverageWaitingTime(waitingTimes.length > 0 ? waitingTimes.reduce((a, b) => a + b, 0) / waitingTimes.length : 0);
-
-        // Most frequent vessel
-        if (Object.keys(vesselCounts).length > 0) {
-          const maxVessel = Object.keys(vesselCounts).reduce((a, b) => vesselCounts[a] > vesselCounts[b] ? a : b);
-          setMostFrequentVessel(maxVessel);
-          const totalVessels = vesselData.length;
-          setFrequencyPercentage((vesselCounts[maxVessel] / totalVessels) * 100 || 0);
-        }
-
-        // Fetch time periods
-        const { data: periodData, error: periodError } = await supabase
-          .from('another')
-          .select('period')
-          .not('period', 'is', null)
-          .eq('user_id', parseInt(userId));
-        if (periodError) {
-          console.error('Error fetching periods:', periodError);
-          setError('Failed to fetch time periods. Please try again.');
-          return;
-        }
-        const uniquePeriods = [...new Set(periodData.map(item => item.period))]
-          .filter(period => period)
-          .map(period => ({ label: period, href: '#', disabled: false }));
-        setTimePeriodItems(uniquePeriods);
       } catch (err) {
-        console.error('Unexpected error:', err);
-        setError('Unexpected error occurred while fetching data.');
+        console.error('Error fetching dashboard data:', err.message);
+        setError('Failed to fetch dashboard data. Please try again.');
+        toast.error('Failed to fetch dashboard data.', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
     };
 
@@ -457,7 +196,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Filters */}
+      {/* Filters (uncomment if you want to enable dropdowns) */}
       {/* <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="text-gray-600">
           <Dropdown
@@ -516,7 +255,7 @@ export default function Dashboard() {
           <h2 className="font-bold mb-2">Most Frequent Vessel Calls</h2>
           <div className="flex items-center justify-center h-25">
             <div className="text-center">
-              <span className="text-7xl font-bold text-red-900">{mostFrequentVessel || 'N/A'}</span>
+              <span className="text-7xl font-bold text-red-900">{mostFrequentVessel}</span>
               <p className="text-md text-gray-500">
                 {frequencyPercentage.toFixed(2)}% of total calls
               </p>
