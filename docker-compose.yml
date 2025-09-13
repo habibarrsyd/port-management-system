@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      DB_HOST: host.docker.internal   # override hanya saat di Docker
+      DB_SSLMODE: disable
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:5000  # opsional; sinkron dengan fe/.env
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
