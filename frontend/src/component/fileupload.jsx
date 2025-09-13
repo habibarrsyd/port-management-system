@@ -63,7 +63,7 @@ export default function FileUpload() {
   formData.append("user_id", userId);
 
   try {
-    const response = await fetch(`${API_URL}/upload`, {
+    const response = await fetch(`${API_URL}/api/upload`, {
       method: "POST",
       body: formData,
       // JANGAN set Content-Type — biar browser otomatis handle multipart/form-data

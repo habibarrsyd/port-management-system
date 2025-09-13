@@ -38,7 +38,7 @@ export default function TransactionsTable() {
 
     try {
       // 🔹 Panggil backend Flask (pastikan Flask jalan di port 5000)
-      const response = await fetch(`${API_URL}/transactions?user_id=${userId}`);
+      const response = await fetch(`${API_URL}/api/transactions?user_id=${userId}`);
       const data = await response.json();
 
       if (response.ok) {

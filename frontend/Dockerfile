@@ -1,33 +1,19 @@
 # ---------- Stage 1: Build React Vite ----------
 FROM node:18-slim AS build
-
-# Set working directory
 WORKDIR /app
-
-# Copy package.json & package-lock.json / yarn.lock
 COPY package*.json ./
-
-# Install dependencies dan bersihkan cache
-RUN npm install && npm cache clean --force
-
-# Copy semua source code
+# Lebih reproducible:
+RUN npm ci && npm cache clean --force
 COPY . .
-
-# Build production
+# Baca env saat build (opsional)
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # ---------- Stage 2: Serve dengan Nginx ----------
 FROM nginx:alpine
-
-# Hapus default nginx website
-RUN rm -rf /usr/share/nginx/html/*
-
-# Copy hasil build dari stage sebelumnya
+# Pakai config custom
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
-
-# Expose port
 EXPOSE 80
-
-# Jalankan Nginx
 CMD ["nginx", "-g", "daemon off;"]
-

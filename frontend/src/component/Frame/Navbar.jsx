@@ -165,11 +165,8 @@ export default function Navbar() {
     <div className="shadow-md w-full fixed bg-white top-0 left-0 z-10">
       <div className="flex items-center justify-between bg-white py-4 md:px-8 px-6">
         <div className="font-bold text-xl cursor-pointer flex items-center gap-2">
-          <img
-            src="./src/assets/images/logo-spil.png"
-            className="w-[50px] h-[30px]"
-            alt="logo"
-          />
+          <img src={`${import.meta.env.BASE_URL}images/logo-spil.png`} className="w-[50px] h-[30px]" alt="logo" />
+
           Port Monitoring System
         </div>
         <div className="navbar-desktop md:flex items-center gap-2 text-lg">
