@@ -66,7 +66,7 @@ export default function Navbar() {
 
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/profile?user_id=${userId}`,
+          `${import.meta.env.VITE_API_URL}/profile?user_id=${userId}`,
           {
             method: "GET",
             headers: {
@@ -112,7 +112,7 @@ export default function Navbar() {
     const userId = localStorage.getItem("user_id");
     if (userId) {
       // Call the logout endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/logout`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

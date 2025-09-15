@@ -128,7 +128,7 @@ export default function Dashboard() {
         }
 
         // Fetch data from Flask /dashboard endpoint
-        const response = await fetch(`${API_URL}/api/dashboard?user_id=${userId}`, {
+        const response = await fetch(`${API_URL}/dashboard?user_id=${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
