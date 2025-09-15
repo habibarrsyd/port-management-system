@@ -1,463 +1,275 @@
-/* PAGE NAVBAR MANUAL PERTAMA LANCAR AMAN TAPI HARUS MAKE <NAVBAR /> DI APP,JSX */
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import Icon from "@mdi/react";
+import { MdMail } from "react-icons/md";
+import { mdiMenu, mdiClose, mdiServerNetwork } from "@mdi/js";
+import { MdSupervisedUserCircle } from "react-icons/md";
+
+const Dropdown = ({ id, buttonContent, menuContent }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="relative inline-flex" ref={dropdownRef}>
+      <div
+        id={id}
+        className="cursor-pointer"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-label="Dropdown"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {buttonContent}
+      </div>
+      <ul
+        className={`absolute right-0 mt-2 min-w-fit max-w-xs bg-white shadow-lg rounded-md border border-gray-200 py-1 z-50 ${
+          isOpen ? "block" : "hidden"
+        }`}
+        role="menu"
+        aria-orientation="vertical"
+        aria-labelledby={id}
+      >
+        {menuContent}
+      </ul>
+    </div>
+  );
+};
 
 export default function Navbar() {
+  const [open, setOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [profileName, setProfileName] = useState("");
+  const navigate = useNavigate();
+
+  // Fetch user profile from Flask backend
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) {
+        setUser(null);
+        setProfileName("");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/profile?user_id=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        setUser({
+          user_id: data.user_id,
+          name: data.name,
+          email: data.email,
+        });
+        setProfileName(data.name || "");
+      } catch (error) {
+        console.error("Error fetching profile:", error.message);
+        setUser(null);
+        setProfileName("");
+        toast.error("Failed to fetch profile data.");
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+  const link = [
+    { name: "Upload", path: "/upload" },
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "Transactions", path: "/transactions" },
+  ];
+
+  const handleLogout = async () => {
+  try {
+    const userId = localStorage.getItem("user_id");
+    if (userId) {
+      // Call the logout endpoint
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+    }
+
+    // Remove user_id from localStorage
+    localStorage.removeItem("user_id");
+    // Remove token if JWT is implemented
+    // localStorage.removeItem("token");
+
+    toast.success("Successfully logged out!", {
+      position: "top-right",
+      autoClose: 1000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+
+    // Wait for toast to show
+    setTimeout(() => {
+      navigate("/login");
+    }, 1000);
+  } catch (err) {
+    toast.error("Unexpected error during logout: " + err.message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+    console.error("Unexpected logout error:", err.message);
+  }
+};
+
   return (
-    <nav className="bg-red-300 text-white w-full sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center ml-[10px]">
-            <img 
-              src="./src/assets/images/logo-spil.png"
-              alt="logo"
-              className="w-[50px] h-[30px] mt-[5px]"
-            />
-            <span className=" font-bold ml-[15px]">
-              Port Monitoring System
-            </span>
-          </div>
+    <div className="shadow-md w-full fixed bg-white top-0 left-0 z-10">
+      <div className="flex items-center justify-between bg-white py-4 md:px-8 px-6">
+        <div className="font-bold text-xl cursor-pointer flex items-center gap-2">
+          <img src={`${import.meta.env.BASE_URL}images/logo-spil.png`} className="w-[50px] h-[30px]" alt="logo" />
 
-
-          {/* Menu links */}
-          <div className="flex space-x-10">
-            <Link to="/" className="hover:text-gray-300 ml-[10px]">
-              Dashboard
+          Port Monitoring System
+        </div>
+        <div className="navbar-desktop md:flex items-center gap-2 text-lg">
+          {user ? (
+            <>
+              <ul className="flex items-center gap-4">
+                {link.map((item) => (
+                  <li key={item.path} className="hover:text-blue-500">
+                    <Link to={item.path}>{item.name}</Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="ml-3">
+                <Dropdown
+                  id="avatar-dropdown"
+                  buttonContent={
+                    <div className="avatar placeholder">
+                      <div className="bg-neutral text-neutral-content w-8 rounded-full ring-3 ring-gray-800 flex items-center justify-center">
+                        <span className="text-md font-extrabold">
+                          {profileName ? profileName[0].toUpperCase() : "U"}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                  menuContent={
+                    <>
+                      <li className="bg-white px-3 py-2 text-[#353333] font-medium rounded-md flex items-center">
+                        <MdSupervisedUserCircle className="inline mr-1 text-red-800 w-4 h-4 flex-shrink-0" />
+                        <span>{profileName || "User"}</span>
+                      </li>
+                      <li className="bg-white px-3 py-2 text-xs text-gray-600 rounded-md flex items-center">
+                        <MdMail className="inline mr-1 text-red-800 w-4 h-4 flex-shrink-0" />
+                        <span>{user?.email || "No email"}</span>
+                      </li>
+                      <li>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center px-3 py-2 gap-1 text-red-800 hover:bg-red-100 w-full text-left"
+                        >
+                          <Icon path={mdiServerNetwork} size={0.6} className="text-red-800" />
+                          Logout
+                        </button>
+                      </li>
+                    </>
+                  }
+                />
+              </div>
+            </>
+          ) : (
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Login
             </Link>
-            <Link to="/upload" className="hover:text-gray-30 ml-[10px]">
-              Upload Data
-            </Link>
-            <Link to="/transactions" className="hover:text-gray-300 ml-[30px]">
-              View Transactions
-            </Link>
-            {/* <Link to="/admin" className="hover:text-gray-300">
-              Admin Panel
-            </Link> */}
-          </div>
-
-          {/* Profile */}
-          {/* <div className="flex items-center space-x-2">
-            <span className="hidden sm:block">admin</span>
-            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
-              Admin
-            </span>
-          </div> */}
+          )}
+        </div>
+        <div
+          onClick={() => setOpen(!open)}
+          className="text-3xl cursor-pointer md:hidden"
+        >
+          <Icon path={open ? mdiClose : mdiMenu} size={1.2} />
         </div>
       </div>
-    </nav>
+      {open && (
+        <ul className="md:hidden absolute bg-white w-full left-0 top-10 flex flex-col items-start gap-3 py-4 px-8 text-lg shadow-md transition-all duration-500 ease-in-out">
+          {user ? (
+            <>
+              {link.map((item) => (
+                <li
+                  key={item.path}
+                  className="w-full hover:text-blue-500"
+                  onClick={() => setOpen(false)}
+                >
+                  <Link to={item.path}>{item.name}</Link>
+                </li>
+              ))}
+              <li className="w-full px-3 py-1 text-[#353333] font-medium">
+                {profileName || "User"}
+              </li>
+              <li className="w-full text-red-500 hover:text-blue-500">
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1 font-medium hover:bg-gray-100 w-full text-left"
+                >
+                  <Icon
+                    path={mdiServerNetwork}
+                    size={0.8}
+                    className="text-red-500"
+                  />
+                  Logout
+                </button>
+              </li>
+            </>
+          ) : (
+            <li className="w-full hover:text-blue-500">
+              <Link to="/login" onClick={() => setOpen(false)}>
+                Login
+              </Link>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
   );
 }
-
-// /* PAGE NAVBAR OTOMATIS TEMPLATE PERTAMA LANCAR TAPI HARUS CUSTOM <NAVBAR /> DI APP,JSX */
-// // import { useState } from "react";
-
-// // export default function Navbar() {
-// //   const [isOpen, setIsOpen] = useState(false);
-
-// //   return (
-// //     <nav className="relative flex items-center justify-between sm:h-10 md:justify-center py-6 px-4 mt-2">
-// //       {/* Logo + Toggle Button */}
-// //       <div className="flex items-center flex-1 md:absolute md:inset-y-0 md:left-0">
-// //         <div className="flex items-center justify-between w-full md:w-auto">
-// //           <a href="/" aria-label="Home">
-// //             <img
-// //               src="https://www.svgrepo.com/show/491978/gas-costs.svg"
-// //               height="40"
-// //               width="40"
-// //               alt="Logo"
-// //             />
-// //           </a>
-// //           {/* Mobile Menu Button */}
-// //           <div className="-mr-2 flex items-center md:hidden">
-// //             <button
-// //               type="button"
-// //               aria-label="Main menu"
-// //               aria-haspopup="true"
-// //               onClick={() => setIsOpen(!isOpen)}
-// //               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 
-// //                          hover:text-gray-500 hover:bg-gray-100 focus:outline-none 
-// //                          focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
-// //             >
-// //               <svg
-// //                 stroke="currentColor"
-// //                 fill="none"
-// //                 viewBox="0 0 24 24"
-// //                 className="h-6 w-6"
-// //               >
-// //                 <path
-// //                   strokeLinecap="round"
-// //                   strokeLinejoin="round"
-// //                   strokeWidth="2"
-// //                   d={
-// //                     isOpen
-// //                       ? "M6 18L18 6M6 6l12 12" // "X" icon
-// //                       : "M4 6h16M4 12h16M4 18h16" // hamburger
-// //                   }
-// //                 />
-// //               </svg>
-// //             </button>
-// //           </div>
-// //         </div>
-// //       </div>
-
-// //       {/* Navigation Links */}
-// //       <div className="flex space-x-10">
-// //         <a
-// //           href="#features"
-// //           className="font-medium text-gray-500 hover:text-gray-900 transition duration-150 ease-in-out"
-// //         >
-// //           Features
-// //         </a>
-// //         <a
-// //           href="#pricing"
-// //           className="font-medium text-gray-500 hover:text-gray-900 transition duration-150 ease-in-out"
-// //         >
-// //           Pricing
-// //         </a>
-// //         <a
-// //           href="/blog"
-// //           className="font-medium text-gray-500 hover:text-gray-900 transition duration-150 ease-in-out"
-// //         >
-// //           Blog
-// //         </a>
-// //         <a
-// //           href="https://docs.pingping.io"
-// //           target="_blank"
-// //           rel="noreferrer"
-// //           className="font-medium text-gray-500 hover:text-gray-900 transition duration-150 ease-in-out"
-// //         >
-// //           Docs
-// //         </a>
-// //       </div>
-
-// //       {/* Right Buttons */}
-// //       <div className="hidden md:absolute md:flex md:items-center md:justify-end md:inset-y-0 md:right-0">
-// //         <span className="inline-flex">
-// //           <a
-// //             href="/login"
-// //             className="inline-flex items-center px-4 py-2 border border-transparent text-base 
-// //                        leading-6 font-medium text-blue-600 hover:text-blue-500 
-// //                        focus:outline-none transition duration-150 ease-in-out"
-// //           >
-// //             Login
-// //           </a>
-// //         </span>
-// //         <span className="inline-flex rounded-md shadow ml-2">
-// //           <a
-// //             href="/signup"
-// //             className="inline-flex items-center px-4 py-2 border border-transparent text-base 
-// //                        leading-6 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-500 
-// //                        focus:outline-none focus:border-blue-700 transition duration-150 ease-in-out"
-// //           >
-// //             Get started
-// //           </a>
-// //         </span>
-// //       </div>
-
-// //       {/* Mobile Dropdown */}
-// //       {isOpen && (
-// //         <div className="absolute top-16 left-0 w-full bg-white shadow-md md:hidden">
-// //           <div className="flex flex-col space-y-2 p-4">
-// //             <a href="#features" className="text-gray-700">
-// //               Features
-// //             </a>
-// //             <a href="#pricing" className="text-gray-700">
-// //               Pricing
-// //             </a>
-// //             <a href="/blog" className="text-gray-700">
-// //               Blog
-// //             </a>
-// //             <a href="https://docs.pingping.io" target="_blank" rel="noreferrer" className="text-gray-700">
-// //               Docs
-// //             </a>
-// //             <a href="/login" className="text-blue-600">
-// //               Login
-// //             </a>
-// //             <a href="/signup" className="bg-blue-600 text-white px-4 py-2 rounded-md">
-// //               Get started
-// //             </a>
-// //           </div>
-// //         </div>
-// //       )}
-// //     </nav>
-// //   );
-// // }
-
-// /**PAGE TRIAL KETIGA/*
-// // import React from "react";
-// // import { Link } from "react-router-dom";
-// // import {
-// //   Navbar,
-// //   MobileNav,
-// //   Typography,
-// //   Button,
-// //   Menu,
-// //   MenuHandler,
-// //   MenuList,
-// //   MenuItem,
-// //   Avatar,
-// //   Card,
-// //   IconButton,
-// // } from "@material-tailwind/react";
-// // import {
-// //   CubeTransparentIcon,
-// //   UserCircleIcon,
-// //   CodeBracketSquareIcon,
-// //   Square3Stack3DIcon,
-// //   ChevronDownIcon,
-// //   Cog6ToothIcon,
-// //   InboxArrowDownIcon,
-// //   LifebuoyIcon,
-// //   PowerIcon,
-// //   RocketLaunchIcon,
-// //   Bars2Icon,
-// // } from "@heroicons/react/24/solid";
- 
-// // // profile menu component
-// // const profileMenuItems = [
-// //   {
-// //     label: "My Profile",
-// //     icon: UserCircleIcon,
-// //   },
-// //   {
-// //     label: "Edit Profile",
-// //     icon: Cog6ToothIcon,
-// //   },
-// //   {
-// //     label: "Inbox",
-// //     icon: InboxArrowDownIcon,
-// //   },
-// //   {
-// //     label: "Help",
-// //     icon: LifebuoyIcon,
-// //   },
-// //   {
-// //     label: "Sign Out",
-// //     icon: PowerIcon,
-// //   },
-// // ];
- 
-// // function ProfileMenu() {
-// //   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
- 
-// //   const closeMenu = () => setIsMenuOpen(false);
- 
-// //   return (
-// //     <Menu open={isMenuOpen} handler={setIsMenuOpen} placement="bottom-end">
-// //       <MenuHandler>
-// //         <Button
-// //           variant="text"
-// //           color="blue-gray"
-// //           className="flex items-center gap-1 rounded-full py-0.5 pr-2 pl-0.5 lg:ml-auto"
-// //         >
-// //           <Avatar
-// //             variant="circular"
-// //             size="sm"
-// //             alt="tania andrew"
-// //             className="border border-gray-900 p-0.5"
-// //             src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1480&q=80"
-// //           />
-// //           <ChevronDownIcon
-// //             strokeWidth={2.5}
-// //             className={`h-3 w-3 transition-transform ${
-// //               isMenuOpen ? "rotate-180" : ""
-// //             }`}
-// //           />
-// //         </Button>
-// //       </MenuHandler>
-// //       <MenuList className="p-1">
-// //         {profileMenuItems.map(({ label, icon }, key) => {
-// //           const isLastItem = key === profileMenuItems.length - 1;
-// //           return (
-// //             <MenuItem
-// //               key={label}
-// //               onClick={closeMenu}
-// //               className={`flex items-center gap-2 rounded ${
-// //                 isLastItem
-// //                   ? "hover:bg-red-500/10 focus:bg-red-500/10 active:bg-red-500/10"
-// //                   : ""
-// //               }`}
-// //             >
-// //               {React.createElement(icon, {
-// //                 className: `h-4 w-4 ${isLastItem ? "text-red-500" : ""}`,
-// //                 strokeWidth: 2,
-// //               })}
-// //               <Typography
-// //                 as="span"
-// //                 variant="small"
-// //                 className="font-normal"
-// //                 color={isLastItem ? "red" : "inherit"}
-// //               >
-// //                 {label}
-// //               </Typography>
-// //             </MenuItem>
-// //           );
-// //         })}
-// //       </MenuList>
-// //     </Menu>
-// //   );
-// // }
- 
-// // // nav list menu
-// // const navListMenuItems = [
-// //   {
-// //     title: "@material-tailwind/html",
-// //     description:
-// //       "Learn how to use @material-tailwind/html, packed with rich components and widgets.",
-// //   },
-// //   {
-// //     title: "@material-tailwind/react",
-// //     description:
-// //       "Learn how to use @material-tailwind/react, packed with rich components for React.",
-// //   },
-// //   {
-// //     title: "Material Tailwind PRO",
-// //     description:
-// //       "A complete set of UI Elements for building faster websites in less time.",
-// //   },
-// // ];
- 
-// // function NavListMenu() {
-// //   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
- 
-// //   const renderItems = navListMenuItems.map(({ title, description }) => (
-// //     <a href="#" key={title}>
-// //       <MenuItem>
-// //         <Typography variant="h6" color="blue-gray" className="mb-1">
-// //           {title}
-// //         </Typography>
-// //         <Typography variant="small" color="gray" className="font-normal">
-// //           {description}
-// //         </Typography>
-// //       </MenuItem>
-// //     </a>
-// //   ));
- 
-// //   return (
-// //     <React.Fragment>
-// //       <Menu allowHover open={isMenuOpen} handler={setIsMenuOpen}>
-// //         <MenuHandler>
-// //           <Typography as="a" href="#" variant="small" className="font-normal">
-// //             <MenuItem className="hidden items-center gap-2 font-medium text-blue-gray-900 lg:flex lg:rounded-full">
-// //               <Square3Stack3DIcon className="h-[18px] w-[18px] text-blue-gray-500" />{" "}
-// //               Pages{" "}
-// //               <ChevronDownIcon
-// //                 strokeWidth={2}
-// //                 className={`h-3 w-3 transition-transform ${
-// //                   isMenuOpen ? "rotate-180" : ""
-// //                 }`}
-// //               />
-// //             </MenuItem>
-// //           </Typography>
-// //         </MenuHandler>
-// //         <MenuList className="hidden w-[36rem] grid-cols-7 gap-3 overflow-visible lg:grid">
-// //           <Card
-// //             color="blue"
-// //             shadow={false}
-// //             variant="gradient"
-// //             className="col-span-3 grid h-full w-full place-items-center rounded-md"
-// //           >
-// //             <RocketLaunchIcon strokeWidth={1} className="h-28 w-28" />
-// //           </Card>
-// //           <ul className="col-span-4 flex w-full flex-col gap-1">
-// //             {renderItems}
-// //           </ul>
-// //         </MenuList>
-// //       </Menu>
-// //       <MenuItem className="flex items-center gap-2 font-medium text-blue-gray-900 lg:hidden">
-// //         <Square3Stack3DIcon className="h-[18px] w-[18px] text-blue-gray-500" />{" "}
-// //         Pages{" "}
-// //       </MenuItem>
-// //       <ul className="ml-6 flex w-full flex-col gap-1 lg:hidden">
-// //         {renderItems}
-// //       </ul>
-// //     </React.Fragment>
-// //   );
-// // }
- 
-// // // nav list component
-// // const navListItems = [
-// //   {
-// //     label: "Account",
-// //     icon: UserCircleIcon,
-// //   },
-// //   {
-// //     label: "Blocks",
-// //     icon: CubeTransparentIcon,
-// //   },
-// //   {
-// //     label: "Docs",
-// //     icon: CodeBracketSquareIcon,
-// //   },
-// // ];
- 
-// // function NavList() {
-// //   return (
-// //     <ul className="mt-2 mb-4 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center">
-// //       <NavListMenu />
-// //       {navListItems.map(({ label, icon }, key) => (
-// //         <Typography
-// //           key={label}
-// //           as="a"
-// //           href="#"
-// //           variant="small"
-// //           color="gray"
-// //           className="font-medium text-blue-gray-500"
-// //         >
-// //           <MenuItem className="flex items-center gap-2 lg:rounded-full">
-// //             {React.createElement(icon, { className: "h-[18px] w-[18px]" })}{" "}
-// //             <span className="text-gray-900"> {label}</span>
-// //           </MenuItem>
-// //         </Typography>
-// //       ))}
-// //     </ul>
-// //   );
-// // }
- 
-// // export function ComplexNavbar() {
-// //   const [isNavOpen, setIsNavOpen] = React.useState(false);
- 
-// //   const toggleIsNavOpen = () => setIsNavOpen((cur) => !cur);
- 
-// //   React.useEffect(() => {
-// //     window.addEventListener(
-// //       "resize",
-// //       () => window.innerWidth >= 960 && setIsNavOpen(false),
-// //     );
-// //   }, []);
- 
-// //   return (
-// //     <Navbar className="mx-auto max-w-screen-xl p-2 lg:rounded-full lg:pl-6">
-// //       <div className="relative mx-auto flex items-center justify-between text-blue-gray-900">
-// //         <Typography
-// //           as="a"
-// //           href="#"
-// //           className="mr-4 ml-2 cursor-pointer py-1.5 font-medium"
-// //         >
-// //           Material Tailwind
-// //         </Typography>
-// //         <div className="hidden lg:block">
-// //           <NavList />
-// //         </div>
-// //         <IconButton
-// //           size="sm"
-// //           color="blue-gray"
-// //           variant="text"
-// //           onClick={toggleIsNavOpen}
-// //           className="ml-auto mr-2 lg:hidden"
-// //         >
-// //           <Bars2Icon className="h-6 w-6" />
-// //         </IconButton>
- 
-// //         <Button size="sm" variant="text">
-// //           <span>Log In</span>
-// //         </Button>
-// //         <ProfileMenu />
-// //       </div>
-// //       <MobileNav open={isNavOpen} className="overflow-scroll">
-// //         <NavList />
-// //       </MobileNav>
-// //     </Navbar>
-// //   );
-// // }

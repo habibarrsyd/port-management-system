@@ -14,7 +14,7 @@ export default function SuccessPage() {
           File Anda sudah berhasil diupload dan disimpan ke database.
         </p>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/upload")}
           className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
         >
           Kembali ke Upload
